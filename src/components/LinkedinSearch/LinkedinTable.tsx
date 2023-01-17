@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { useState } from 'react';
 import { IconEdit, IconTrash, IconTrashX } from '@tabler/icons';
-import { MicpaLinkedinPerson } from '@prisma/client';
+import { MicpaPerson, MicpaLinkedinPerson } from '@prisma/client';
 
 import { api } from "../../utils/api";
 
@@ -31,7 +31,9 @@ export default function LinkedinTable() {
 
   const persons = api.person.fetchAllLinkedinPersons.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page });
 
-  const [selectedRecords, setSelectedRecords] = useState<MicpaLinkedinPerson[]>([]);
+  const [selectedRecords, setSelectedRecords] = useState<(MicpaLinkedinPerson & {
+    micpaPerson: MicpaPerson;
+  })[]>([]);
 
   const {
     breakpoints: { xs: xsBreakpoint },
