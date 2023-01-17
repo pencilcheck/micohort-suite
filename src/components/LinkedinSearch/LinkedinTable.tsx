@@ -105,7 +105,7 @@ export default function LinkedinTable() {
             children: (
               <Stack>
                 <Center>
-                  <a target="_blank" href={(information as JSONObject)?.url as string}>Linkedin URL</a>
+                  <a target="_blank" rel="noreferrer" href={(information as JSONObject)?.url as string}>Linkedin URL</a>
                 </Center>
                 <Button onClick={() => closeAllModals()}>Close</Button>
               </Stack>

@@ -67,10 +67,18 @@ export function LinksGroup({ icon: Icon, label, initiallyOpened, path, links }: 
       {link.label}
     </Text>
   ));
+  
+  const onClick = () => {
+    if (hasLinks) {
+      setOpened((o) => !o)
+    } else {
+      path && router.push(path)
+    }
+  }
 
   return (
     <>
-      <UnstyledButton onClick={() => hasLinks ? setOpened((o) => !o) : path && router.push(path)} className={classes.control}>
+      <UnstyledButton onClick={onClick} className={classes.control}>
         <Group position="apart" spacing={0}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <ThemeIcon variant="light" size={30}>
