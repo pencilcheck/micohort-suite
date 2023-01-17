@@ -167,7 +167,7 @@ declare module 'puppeteer-core' {
         }): Promise<void>
         evaluate<T>(pageFunction: ((...args: any[]) => T) | string, ...args: any[]): Promise<T>
         evaluateOnNewDocument<T>(pageFunction: ((...args: any[]) => T) | string, ...args: any[]): Promise<T>
-        exposeFunction(name: string, puppeteerFunction: Function): void
+        exposeFunction(name: string, puppeteerFunction: () => void): void
         focus(selector: string): Promise<void>
         frames(): Promise<Frame[]>
         goBack(options?: GoBackOptions): Promise<Response>
@@ -235,7 +235,7 @@ declare module 'puppeteer-core' {
             visible?: boolean
             timeout?: number
         }): Promise<void>
-        waitFor(selectorOrFunctionOrTimeout: Function, options?: {
+        waitFor(selectorOrFunctionOrTimeout: () => void, options?: {
             /**
              * polling <string|number> An interval at which the pageFunction is executed, defaults to raf.
              * If polling is a number, then it is treated as an interval in milliseconds at which the function would be executed. If polling is a string, then it could be one of the following values:
@@ -252,7 +252,7 @@ declare module 'puppeteer-core' {
          * if selectorOrFunctionOrTimeout is a number, than the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
          */
         waitFor(selectorOrFunctionOrTimeout: number): Promise<void>
-        waitForFunction(func: string | Function, options?: {
+        waitForFunction(func: string | (() => void), options?: {
             /**
              * polling <string|number> An interval at which the pageFunction is executed, defaults to raf.
              * If polling is a number, then it is treated as an interval in milliseconds at which the function would be executed. If polling is a string, then it could be one of the following values:
@@ -320,7 +320,7 @@ declare module 'puppeteer-core' {
             visible?: boolean
             timeout?: number
         }): Promise<void>
-        waitFor(selectorOrFunctionOrTimeout: Function, options?: {
+        waitFor(selectorOrFunctionOrTimeout: () => void, options?: {
             /**
              * polling <string|number> An interval at which the pageFunction is executed, defaults to raf.
              * If polling is a number, then it is treated as an interval in milliseconds at which the function would be executed. If polling is a string, then it could be one of the following values:
@@ -337,7 +337,7 @@ declare module 'puppeteer-core' {
          * if selectorOrFunctionOrTimeout is a number, than the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
          */
         waitFor(selectorOrFunctionOrTimeout: number): Promise<void>
-        waitForFunction(func: string | Function, options?: {
+        waitForFunction(func: string | (() => void), options?: {
             /**
              * polling <string|number> An interval at which the pageFunction is executed, defaults to raf.
              * If polling is a number, then it is treated as an interval in milliseconds at which the function would be executed. If polling is a string, then it could be one of the following values:
