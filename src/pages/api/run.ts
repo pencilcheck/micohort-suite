@@ -1,4 +1,5 @@
 // api/run.js
+import type { NextApiRequest, NextApiResponse } from 'next'
 import edgeChromium from 'chrome-aws-lambda'
 
 // Importing Puppeteer core as default otherwise
@@ -11,7 +12,7 @@ import puppeteer from 'puppeteer-core'
 // system-agnostic options for Puppeteeer.
 const LOCAL_CHROME_EXECUTABLE = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
-export default async function (req, res) {
+export default async function (req: NextApiRequest, res: NextApiResponse) {
   // Edge executable will return an empty string locally.
   const executablePath = await edgeChromium.executablePath || LOCAL_CHROME_EXECUTABLE
   
