@@ -70,7 +70,7 @@ export function LinksGroup({ icon: Icon, label, initiallyOpened, path, links }: 
 
   return (
     <>
-      <UnstyledButton onClick={() => hasLinks ? setOpened((o) => !o) : router.push(path)} className={classes.control}>
+      <UnstyledButton onClick={() => hasLinks ? setOpened((o) => !o) : path && router.push(path)} className={classes.control}>
         <Group position="apart" spacing={0}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <ThemeIcon variant="light" size={30}>
