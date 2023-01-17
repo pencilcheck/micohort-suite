@@ -6,12 +6,13 @@ generator client {
 }
 
 datasource db {
-    provider = "sqlite"
+    provider     = "mysql"
     // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
     // Further reading:
     // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
     // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+    url          = env("DATABASE_URL")
+    relationMode = "prisma"
 }
 
 model Example {
@@ -63,4 +64,43 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+// below are models used by this application
+
+model MailingList {
+    id            String    @id @default(cuid())
+    title         String
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    persons       MailingListsOnPersons[]
+}
+
+model MicpaPerson {
+    id                  String          @id @default(cuid())
+    name                String
+    email               String
+    company             String
+    address             String?
+    scrapedAt           DateTime? // last time we scraped linkedin for this person
+    mailingLists        MailingListsOnPersons[]
+    linkedinPersons     MicpaLinkedinPerson[]
+}
+
+model MicpaLinkedinPerson {
+    id                  String          @id @default(cuid())
+    information         Json
+    micpaPersonId       String
+    micpaPerson         MicpaPerson     @relation(fields: [micpaPersonId], references: [id], onDelete: Cascade)
+}
+
+model MailingListsOnPersons {
+    mailingListId       String
+    mailingList         MailingList     @relation(fields: [mailingListId], references: [id])
+    personId            String
+    person              MicpaPerson     @relation(fields: [personId], references: [id])
+    assignedAt DateTime @default(now())
+    assignedBy String
+
+    @@id([mailingListId, personId])
 }
