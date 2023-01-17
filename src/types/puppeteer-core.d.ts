@@ -394,7 +394,7 @@ declare module 'puppeteer-core' {
     export interface Response {
         buffer(): Promise<Buffer>
         headers: any
-        json<T = Object>(): Promise<T>
+        json<T = any>(): Promise<T>
         ok: boolean
         request(): Request
         status: number
