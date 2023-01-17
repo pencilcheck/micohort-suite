@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { useState } from 'react';
 import { IconEdit, IconTrash, IconTrashX } from '@tabler/icons';
-import { MicpaPerson } from '@prisma/client';
+import { MicpaPerson, MicpaLinkedinPerson } from '@prisma/client';
 
 import { api } from "../../utils/api";
 
@@ -33,7 +33,9 @@ export default function LinkedinTable() {
   // TODO useEffect for selected mailing list for content display
   const persons = api.person.fetchAll.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page });
 
-  const [selectedRecords, setSelectedRecords] = useState<MicpaPerson[]>([]);
+  const [selectedRecords, setSelectedRecords] = useState<(MicpaPerson & {
+    linkedinPersons: MicpaLinkedinPerson[];
+  })[]>([]);
 
   const {
     breakpoints: { xs: xsBreakpoint },
@@ -101,7 +103,7 @@ export default function LinkedinTable() {
             sortable: true,
             visibleMediaQuery: aboveXsMediaQuery,
             cellsStyle: ({ linkedinPersons }) =>
-              linkedinPersons.length > 0 && linkedinPersons[0].information
+              linkedinPersons?.[0]?.information
                 ? {
                     fontWeight: 'bold',
                     color: 'green',
@@ -110,10 +112,10 @@ export default function LinkedinTable() {
                 : undefined,
           },
         ]}
-        records={persons.data?.rows || []}
+        records={persons.data ? persons.data.rows : []}
         page={page}
         onPageChange={setPage}
-        totalRecords={persons?.data?.total || 0}
+        totalRecords={persons.data ? persons.data.total : 0}
         recordsPerPage={PAGE_SIZE}
         sortStatus={sortStatus}
         onSortStatusChange={handleSortStatusChange}
