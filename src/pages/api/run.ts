@@ -10,6 +10,7 @@ import puppeteer from 'puppeteer-core'
 import dayjs from 'dayjs';
 
 import { LoginLinkedin, SearchPeople, ScrapePages, TokenizeDoc, ParseData, GetFields } from '../../utils/puppeteer';
+import { JSONValue } from 'superjson/dist/types';
 
 // You may want to change this if you're developing
 // on a platform different from macOS.
@@ -48,7 +49,7 @@ async function puppeteerHandler(persons: MicpaPerson[]) {
 
       await prisma.micpaLinkedinPerson.createMany({
         data: tokenizedDocs.map(doc => ({
-          information: doc,
+          information: doc as {[key: string]: any},
           micpaPersonId: person.id,
         })),
         skipDuplicates: true,

@@ -5,6 +5,17 @@ import select from '@gizt/selector';
 
 import { env } from "../env/server.mjs";
 
+// Partial shape
+interface DocType {
+  email: string[] | string;
+  connections: string[] | string;
+  name: string[] | string;
+  position: string[] | string;
+  profile_image: string[] | string;
+  profile_url: string[] | string;
+  [key: string]: string[] | string;
+}
+
 const SELECTOR = {
   USERNAME_SELECTOR: 'input[name=session_key]',
   PASSWORD_SELECTOR: 'input[name=session_password]',
@@ -64,20 +75,20 @@ export const SearchPeople = async (page: puppeteer.Page, person: MicpaPerson): P
   //await page.click(SELECTOR.LOCATION_FILTER);
   //await page.click(SELECTOR.LOCATION_SEARCH_INPUT);
   
-  const hrefs = await page.$$eval(SELECTOR.PROFILE_SEARCH_LINKS, links => links.map((a: any) => a.href));
-  return hrefs as string[];
+  const hrefs = await page.$$eval<string[]>(SELECTOR.PROFILE_SEARCH_LINKS, (links: HTMLAnchorElement[]): string[] => links.map<string>((a: HTMLAnchorElement) => a.href || ''));
+  return hrefs;
 }
 
 export const ScrapePages = async (page: puppeteer.Page, urls: string[]) => {
   const data = await mapLimit(urls, 1, async (url: string) => {
-    let result = []
+    const result = []
     // we intercept browser requests instead scrape each profile
     page.on('response', async (response) => {
-      let requestUrl = response.url()
+      const requestUrl = response.url()
       if (requestUrl.includes(API_ENDPOINT)) {
         const textBody = await response.text()
         try {
-          let jsonRes = JSON.parse(textBody)
+          const jsonRes = JSON.parse(textBody) as {[key: string]: any}
           result.push({ url: requestUrl, response: jsonRes })
         } catch(e) {
           result.push({ url: requestUrl, response: textBody })
@@ -92,7 +103,7 @@ export const ScrapePages = async (page: puppeteer.Page, urls: string[]) => {
     //await page.screenshot({path: `verifytest.png`, fullPage: true});
 
     if (await page.$(SELECTOR.PICTURETOP)) {
-      let profile_image = await page.$eval(`.pv-top-card-profile-picture img`, e => e.getAttribute("src"))
+      const profile_image = await page.$eval<string>(`.pv-top-card-profile-picture img`, (e: HTMLElement) => e.getAttribute("src") || '')
 
       result.push({ profile_image: profile_image })
     }
@@ -119,7 +130,7 @@ export const ScrapePages = async (page: puppeteer.Page, urls: string[]) => {
       await page.waitForSelector(SELECTOR.CONTACTINFO_LINK, { visible: true, timeout: 0 });
 
       if (await page.$(SELECTOR.EMAIL_VALUE)) {
-        let email = await page.$eval(SELECTOR.EMAIL_VALUE, e => e.getAttribute("href"))
+        const email = await page.$eval(SELECTOR.EMAIL_VALUE, (e: HTMLElement) => e.getAttribute("href"))
         result.push({ email: email })
       }
 
@@ -142,25 +153,25 @@ export const ScrapePages = async (page: puppeteer.Page, urls: string[]) => {
   return data;
 }
 
-export const TokenizeDoc = (doc: any) => {
+export const TokenizeDoc = (doc: DocType) => {
   const keys = Object.keys(doc)
 
-  let newDoc: any = {}
+  const newDoc: {[key: string]: string} = {}
 
   keys.forEach((k) => {
-    newDoc[k] = doc[k].join(' ')
+    newDoc[k] = (doc[k] as string[])?.join(' ')
   })
 
   return newDoc
 }
 
-export const ParseComponent = (title: string, urn: string, data: any[]) => {
+export const ParseComponent = (title: string, urn: string, data: DocType[]) => {
   const topComponents = data.find(r => r.topComponents && r.entityUrn === urn)?.topComponents
 
   const names = select(
     '[1:].components.fixedListComponent[].components[].components.entityComponent[].title[].text',
     topComponents
-  )
+  ) as string[]
   //console.log(title || urn, names)
 
   return {
@@ -168,27 +179,17 @@ export const ParseComponent = (title: string, urn: string, data: any[]) => {
   }
 }
 
-// Partial shape
-interface DocType {
-  email: string;
-  connections: string;
-  name: string;
-  position: string;
-  profile_image: string;
-  profile_url: string;
-}
+export const ParseData = (data: DocType[]): DocType => {
+  const responses: DocType[] = (select(SEARCH.CARDS.path, data) as DocType[][]).flat()
+  const cards = responses.find(r => (r?.entityUrn as string)?.match(SEARCH.CARDS.entityUrn))?.['*cards'] as string[]
 
-export const ParseData = (data: any[]) => {
-  const responses: any[] = select(SEARCH.CARDS.path, data).flat()
-  const cards = responses.find(r => r?.entityUrn?.match(SEARCH.CARDS.entityUrn))?.['*cards']
-
-  var doc: Partial<DocType> = {
-    email: '',
-    connections: '',
-    name: '',
-    position: '',
-    profile_image: '',
-    profile_url: '',
+  let doc: DocType = {
+    email: select(SEARCH.EMAIL, data) as string[],
+    connections: select(SEARCH.CONNECTIONS, data) as string[],
+    name: select(SEARCH.NAME, data) as string[],
+    position: select(SEARCH.POSITION, data) as string[],
+    profile_image: select(SEARCH.PROFILE_IMAGE, data) as string[],
+    profile_url: select(SEARCH.PROFILE_URL, data) as string[],
   }
 
   if (cards) {
@@ -202,43 +203,12 @@ export const ParseData = (data: any[]) => {
       }
     })
   }
-  doc['profile_url'] = select(SEARCH.PROFILE_URL, data)
-  doc['email'] = select(SEARCH.EMAIL, data)
-  doc['connections'] = select(SEARCH.CONNECTIONS, data)
-  doc['name'] = select(SEARCH.NAME, data)
-  doc['position'] = select(SEARCH.POSITION, data)
-  doc['profile_image'] = select(SEARCH.PROFILE_IMAGE, data)
 
   console.log('-----------')
 
   return doc;
 }
 
-export const GetFields = (doc: any) => {
+export const GetFields = (doc: DocType) => {
   return Object.keys(doc)
-}
-
-export const LunrIndex = async (docs: DocType[]) => {
-  var fields = GetFields(docs[0]);
-
-  //var idx = lunr(function () {
-  //this.ref('name')
-  //fields.forEach(f => {
-  //this.field(f)
-  //}, this)
-
-  //docs.forEach(d => {
-  //this.add(d)
-  //}, this)
-  //})
-
-   //save index
-  //let idxData = JSON.stringify(idx, null, 4);
-  //console.log(idxData)
-  //fs.writeFileSync('static/index.json', idxData);
-
-   //save data
-  //let data = JSON.stringify(docs, null, 4);
-  //console.log(data)
-  //fs.writeFileSync('static/data.json', data);
 }

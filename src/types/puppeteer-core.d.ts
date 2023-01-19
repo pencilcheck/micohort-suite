@@ -133,7 +133,7 @@ declare module 'puppeteer-core' {
     }
 
     export interface Browser {
-        close(): void
+        close(): Promise<void>
         // Closes browser with all the pages (if any were opened). The browser object itself is considered to be disposed and could not be used anymore.
         newPage(): Promise<Page>
         version(): Promise<string>
@@ -141,8 +141,8 @@ declare module 'puppeteer-core' {
     }
 
     export interface Page {
-        $eval(EMAIL_VALUE: string, arg1: (e: any) => any): unknown
-        $$eval(arg0: string, arg1: (links: any) => any): unknown
+        $eval<T>(EMAIL_VALUE: string, arg1: (e: any) => T): Promise<T>
+        $$eval<T>(arg0: string, arg1: (links: any[]) => T): Promise<T>
         on(event: 'console', callback: (...args: string[]) => any): void
         on(event: 'dialog', callback: (dialog: Dialog) => any): void
         on(event: 'error', callback: (err: Error) => any): void
