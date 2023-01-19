@@ -107,7 +107,7 @@ const Home: NextPage = () => {
 
             <Group>
               <Button
-                onClick={() => {router.push('/mailing_list')}}
+                onClick={() => void router.push('/mailing_list')}
                 variant="gradient"
                 gradient={{ from: 'pink', to: 'yellow' }}
                 size="xl"
@@ -117,7 +117,7 @@ const Home: NextPage = () => {
                 Mailing list
               </Button>
               <Button
-                onClick={() => router.push('/linkedin_search')}
+                onClick={() => void router.push('/linkedin_search')}
                 variant="gradient"
                 gradient={{ from: 'yellow', to: 'green' }}
                 size="xl"

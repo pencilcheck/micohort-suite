@@ -36,9 +36,7 @@ async function puppeteerHandler(persons: MicpaPerson[]) {
     for (const person of persons) {
       const hrefs = await SearchPeople(page, person)
       const docs = await ScrapePages(page, hrefs)
-      const tokenizedDocs = docs.map((data) => {
-        return TokenizeDoc(ParseData(data));
-      })
+      const tokenizedDocs = docs.map((data) => TokenizeDoc(ParseData(data)))
 
       // reset since they might be outdated
       await prisma.micpaLinkedinPerson.deleteMany({

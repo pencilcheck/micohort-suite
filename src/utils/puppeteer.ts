@@ -7,13 +7,13 @@ import { env } from "../env/server.mjs";
 
 // Partial shape
 interface DocType {
-  email: string[] | string;
-  connections: string[] | string;
-  name: string[] | string;
-  position: string[] | string;
-  profile_image: string[] | string;
-  profile_url: string[] | string;
-  [key: string]: string[] | string;
+  [key: string]: any;
+  email?: string[] | string;
+  connections?: string[] | string;
+  name?: string[] | string;
+  position?: string[] | string;
+  profile_image?: string[] | string;
+  profile_url?: string[] | string;
 }
 
 const SELECTOR = {
@@ -80,7 +80,7 @@ export const SearchPeople = async (page: puppeteer.Page, person: MicpaPerson): P
 }
 
 export const ScrapePages = async (page: puppeteer.Page, urls: string[]) => {
-  const data = await mapLimit(urls, 1, async (url: string) => {
+  const data = await mapLimit<string, DocType[]>(urls, 1, async (url: string) => {
     const result = []
     // we intercept browser requests instead scrape each profile
     page.on('response', async (response) => {
@@ -153,7 +153,7 @@ export const ScrapePages = async (page: puppeteer.Page, urls: string[]) => {
   return data;
 }
 
-export const TokenizeDoc = (doc: DocType) => {
+export const TokenizeDoc = (doc: DocType): {[key: string]: string} => {
   const keys = Object.keys(doc)
 
   const newDoc: {[key: string]: string} = {}
@@ -166,7 +166,7 @@ export const TokenizeDoc = (doc: DocType) => {
 }
 
 export const ParseComponent = (title: string, urn: string, data: DocType[]) => {
-  const topComponents = data.find(r => r.topComponents && r.entityUrn === urn)?.topComponents
+  const topComponents = data.find(r => r.topComponents && r.entityUrn === urn)?.topComponents as {[key: string]: any}
 
   const names = select(
     '[1:].components.fixedListComponent[].components[].components.entityComponent[].title[].text',
