@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@emotion/react': ^11.10.5
   '@emotion/server': ^11.10.0
+  '@gizt/selector': ^1.0.11
   '@mantine/core': ^5.10.0
   '@mantine/dates': ^5.10.0
   '@mantine/form': ^5.10.0
@@ -20,6 +21,7 @@ specifiers:
   '@trpc/next': ^10.8.1
   '@trpc/react-query': ^10.8.1
   '@trpc/server': ^10.8.1
+  '@types/async': ^3.2.16
   '@types/lodash': ^4.14.191
   '@types/node': ^18.11.18
   '@types/prettier': ^2.7.2
@@ -27,6 +29,8 @@ specifiers:
   '@types/react-dom': ^18.0.10
   '@typescript-eslint/eslint-plugin': ^5.47.1
   '@typescript-eslint/parser': ^5.47.1
+  '@upstash/qstash': ^0.3.3
+  async: ^3.2.4
   autoprefixer: ^10.4.7
   chrome-aws-lambda: 2.1.1
   csv: ^6.2.5
@@ -54,6 +58,7 @@ specifiers:
 dependencies:
   '@emotion/react': 11.10.5_kzbn2opkn2327fwg5yzwzya5o4
   '@emotion/server': 11.10.0
+  '@gizt/selector': 1.0.11
   '@mantine/core': 5.10.0_lbfixegkxal6rwioqxubxet6s4
   '@mantine/dates': 5.10.0_afutlozjtr4cmm2smwl7mxxxdy
   '@mantine/form': 5.10.0_react@18.2.0
@@ -71,6 +76,8 @@ dependencies:
   '@trpc/next': 10.9.0_x4tyufyemzhcd3jbb4hcrq3eou
   '@trpc/react-query': 10.9.0_qw4miir7nnxijwjta54q3esyeq
   '@trpc/server': 10.9.0
+  '@upstash/qstash': 0.3.3
+  async: 3.2.4
   chrome-aws-lambda: 2.1.1_puppeteer-core@2.1.1
   dayjs: 1.11.7
   iter-ops: 3.0.7
@@ -85,6 +92,7 @@ dependencies:
   zod: 3.20.2
 
 devDependencies:
+  '@types/async': 3.2.16
   '@types/lodash': 4.14.191
   '@types/node': 18.11.18
   '@types/prettier': 2.7.2
@@ -174,6 +182,10 @@ packages:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
     dev: true
+
+  /@deno/shim-crypto/0.3.1:
+    resolution: {integrity: sha512-ed4pNnfur6UbASEgF34gVxR9p7Mc3qF+Ygbmjiil8ws5IhNFhPDFy5vE5hQAUA9JmVsSxXPcVLM5Rf8LOZqQ5Q==}
+    dev: false
 
   /@emotion/babel-plugin/11.10.5:
     resolution: {integrity: sha512-xE7/hyLHJac7D2Ve9dKroBBZqBT7WuPQmWcq7HSGb84sUuP4mlOWoB8dvVfD9yk5DHkU1m6RW7xSoDtnQHNQeA==}
@@ -335,6 +347,10 @@ packages:
       '@floating-ui/dom': 1.1.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
+    dev: false
+
+  /@gizt/selector/1.0.11:
+    resolution: {integrity: sha512-55tQ34/XWre2tX+cvBXRqWiCErab6poShtKbh2dLpT93+W7Zv5W8ILMxAmOssnC1sokIhbxApFRS7oGV+99qNw==}
     dev: false
 
   /@humanwhocodes/config-array/0.11.8:
@@ -951,6 +967,10 @@ packages:
     resolution: {integrity: sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==}
     dev: true
 
+  /@types/async/3.2.16:
+    resolution: {integrity: sha512-jnlGp5Z/cAZ7JVYyLnSDuYJ+YyYm0o2yzL8Odv6ckWmGMow3j/P/wgfziybB044cXXA93lEuymJyxVR8Iz2amQ==}
+    dev: true
+
   /@types/json-schema/7.0.11:
     resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
     dev: true
@@ -1131,6 +1151,12 @@ packages:
       eslint-visitor-keys: 3.3.0
     dev: true
 
+  /@upstash/qstash/0.3.3:
+    resolution: {integrity: sha512-Zzt6K2iUAkp4dehkSR6LN5UzCh5XQjZIjWl/I0fADj/glxbeIvFC9uGLRDSKpZMqfRe/Z+iQ3/WCEsE8c2J1Tw==}
+    dependencies:
+      '@deno/shim-crypto': 0.3.1
+    dev: false
+
   /acorn-jsx/5.3.2_acorn@8.8.1:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -1295,6 +1321,10 @@ packages:
 
   /async-limiter/1.0.1:
     resolution: {integrity: sha512-csOlWGAcRFJaI6m+F2WKdnMKr4HhdhFVBk0H/QbJFMCr+uO2kwohwXQPxw/9OCxp05r5ghVBFSyioixx3gfkNQ==}
+    dev: false
+
+  /async/3.2.4:
+    resolution: {integrity: sha512-iAB+JbDEGXhyIUavoDl9WP/Jj106Kz9DEn1DPgYw5ruDn0e3Wgi3sKFm55sASdGBNOQB8F59d9qQ7deqrHA8wQ==}
     dev: false
 
   /autoprefixer/10.4.13_postcss@8.4.21:

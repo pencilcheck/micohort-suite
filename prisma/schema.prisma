@@ -82,7 +82,6 @@ model MicpaPerson {
     email               String
     company             String
     address             String?
-    scrapedAt           DateTime? // last time we scraped linkedin for this person
     mailingLists        MailingListsOnPersons[]
     linkedinPersons     MicpaLinkedinPerson[]
 }
@@ -92,6 +91,7 @@ model MicpaLinkedinPerson {
     information         Json
     micpaPersonId       String
     micpaPerson         MicpaPerson     @relation(fields: [micpaPersonId], references: [id], onDelete: Cascade)
+    createdAt           DateTime @default(now()) // use this field to determine the scraped date for a micpaPerson
 }
 
 model MailingListsOnPersons {

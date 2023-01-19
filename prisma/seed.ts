@@ -63,8 +63,14 @@ async function main() {
     const i = pipe(rows, page(10000));
 
     for (const chunks of i) {
+        // Only import alive people (look at micohort-postgresql for usable_person query)
+        const filterChunks = (rows: any[]) => {
+            return rows.filter(r => {
+                return parseInt(r[indexOf(columns, 'Status')]) != 5 && !['111403', '2464'].includes(r[indexOf(columns, 'ID')]);
+            })
+        }
         await prisma.micpaPerson.createMany({
-            data: chunks.map(row => ({
+            data: filterChunks(chunks).map(row => ({
                 id: row[indexOf(columns, 'ID')],
                 name: row[indexOf(columns, 'FirstLast')] || 'No name',
                 email: row[indexOf(columns, 'Email1')] || 'No email',

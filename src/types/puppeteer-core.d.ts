@@ -141,6 +141,8 @@ declare module 'puppeteer-core' {
     }
 
     export interface Page {
+        $eval(EMAIL_VALUE: string, arg1: (e: any) => any): unknown
+        $$eval(arg0: string, arg1: (links: any) => any): unknown
         on(event: 'console', callback: (...args: string[]) => any): void
         on(event: 'dialog', callback: (dialog: Dialog) => any): void
         on(event: 'error', callback: (err: Error) => any): void
@@ -399,7 +401,7 @@ declare module 'puppeteer-core' {
         request(): Request
         status: number
         text(): Promise<string>
-        url: string
+        url(): string
     }
 
     /**
@@ -408,6 +410,7 @@ declare module 'puppeteer-core' {
      * For finer control, you can use keyboard.down, keyboard.up, and keyboard.sendCharacter to manually fire events as if they were generated from a real keyboard.
      */
     export interface Keyboard {
+        type(USERNAME: string): unknown
         down(key: string, options?: {
             text?: string
         }): Promise<void>
