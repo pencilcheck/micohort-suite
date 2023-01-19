@@ -13,7 +13,7 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "engines": {
-    "node": "14.x"
+    "node": "16.x"
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
