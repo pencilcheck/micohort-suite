@@ -6,14 +6,18 @@ import dayjs from 'dayjs';
 
 const prisma = new PrismaClient()
 
-async function puppeteerHandler(req: NextApiRequest, persons: { id: string, name: string}[]) {
-  const url = req.headers.origin ? `${req.headers.origin}/api/scrape` : `http://${req.headers.host}/api/scrape`;
+interface ScraperResponse {
+  data: {[key: string]: string}[][];
+}
+
+async function puppeteerHandler(req: NextApiRequest, persons: { id: string, name: string}[]): Promise<ScraperResponse> {
+  const url = req.headers.origin ? `${req.headers.origin || ''}/api/scrape` : `http://${req.headers.host || 'localhost:3000'}/api/scrape`;
   const response = await fetch(url, {
     method: 'POST',
     body: JSON.stringify(persons),
   })
   
-  return await response.json();
+  return await response.json() as ScraperResponse;
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -47,8 +51,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const response = await puppeteerHandler(req, persons);
     
-    for (var personData of response.data) {
-      const personId = personData[0].personId;
+    for (const personData of response.data) {
+      const personId = personData[0]?.personId;
       if (!personId) continue;
 
       // reset since they might be outdated
@@ -62,7 +66,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         data: personData.map((doc: {[key: string]: any}) => ({
           information: doc,
           micpaPersonId: personId,
-        })),
+        })) || [],
         skipDuplicates: true,
       })
     }

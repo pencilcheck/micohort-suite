@@ -6,7 +6,7 @@ import edgeChromium from 'chrome-aws-lambda'
 // it won't function correctly with "launch()"
 import puppeteer from 'puppeteer-core'
 
-import { LoginLinkedin, SearchPeople, ScrapePages, TokenizeDoc, ParseData, GetFields } from '../../utils/puppeteer';
+import { LoginLinkedin, SearchPeople, ScrapePages, TokenizeDoc, ParseData } from '../../utils/puppeteer';
 
 // You may want to change this if you're developing
 // on a platform different from macOS.
@@ -49,7 +49,7 @@ async function puppeteerHandler(persons: Person[]) {
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const persons = JSON.parse(req.body)
+  const persons = JSON.parse(req.body as string) as Person[];
   const result = await puppeteerHandler(persons);
   res.send({ status: 'OK', data: result })
 }
