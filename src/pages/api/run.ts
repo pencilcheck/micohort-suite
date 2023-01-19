@@ -89,11 +89,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.send({ status: 'OK' })
 }
 
-/*
 // for local testing
 export default handler;
-*/
 
+/*
 export default verifySignature(handler);
 
 export const config = {
@@ -101,3 +100,4 @@ export const config = {
     bodyParser: false,
   },
 };
+*/
