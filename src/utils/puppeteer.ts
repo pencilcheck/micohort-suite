@@ -68,8 +68,8 @@ export const LoginLinkedin = async (page: puppeteer.Page) => {
   await page.waitForSelector(SELECTOR.FEED_SELECTOR, { visible: true, timeout: 0 });
 }
 
-export const SearchPeople = async (page: puppeteer.Page, person: MicpaPerson): Promise<string[]> => {
-  await page.goto(`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(person.name)}&origin=FACETED_SEARCH&sid=COi`)
+export const SearchPeople = async (page: puppeteer.Page, name: string): Promise<string[]> => {
+  await page.goto(`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(name)}&origin=FACETED_SEARCH&sid=COi`)
   await page.waitForSelector(SELECTOR.PROFILE_SEARCH_LINKS, { visible: true, timeout: 0 });
 
   //await page.click(SELECTOR.LOCATION_FILTER);
