@@ -90,13 +90,6 @@ export default function LinkedinTable() {
             visibleMediaQuery: aboveXsMediaQuery,
           },
           {
-            accessor: 'scrapedAt',
-            width: 100,
-            ellipsis: true,
-            sortable: true,
-            render: ({ scrapedAt }) => dayjs(scrapedAt).format('MMMM DD, YYYY'),
-          },
-          {
             accessor: 'score',
             title: 'Score',
             width: 80,

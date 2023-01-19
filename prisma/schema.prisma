@@ -28,12 +28,12 @@ model Account {
     type              String
     provider          String
     providerAccountId String
-    refresh_token     String? // @db.Text
-    access_token      String? // @db.Text
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
     expires_at        Int?
     token_type        String?
     scope             String?
-    id_token          String? // @db.Text
+    id_token          String? @db.Text
     session_state     String?
     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -71,8 +71,8 @@ model VerificationToken {
 model MailingList {
     id            String    @id @default(cuid())
     title         String
-    createdAt     DateTime @default(now())
-    updatedAt     DateTime @updatedAt
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
     persons       MailingListsOnPersons[]
 }
 
@@ -91,7 +91,7 @@ model MicpaLinkedinPerson {
     information         Json
     micpaPersonId       String
     micpaPerson         MicpaPerson     @relation(fields: [micpaPersonId], references: [id], onDelete: Cascade)
-    createdAt           DateTime @default(now()) // use this field to determine the scraped date for a micpaPerson
+    createdAt           DateTime        @default(now()) // use this field to determine the scraped date for a micpaPerson
 }
 
 model MailingListsOnPersons {
@@ -99,7 +99,7 @@ model MailingListsOnPersons {
     mailingList         MailingList     @relation(fields: [mailingListId], references: [id])
     personId            String
     person              MicpaPerson     @relation(fields: [personId], references: [id])
-    assignedAt DateTime @default(now())
+    assignedAt DateTime                 @default(now())
     assignedBy String
 
     @@id([mailingListId, personId])

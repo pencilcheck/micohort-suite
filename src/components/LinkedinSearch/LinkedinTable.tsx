@@ -88,6 +88,13 @@ export default function LinkedinTable() {
             visibleMediaQuery: aboveXsMediaQuery,
             render: ({ information }) => JSON.stringify(information)
           },
+          {
+            accessor: 'createdAt',
+            width: 100,
+            ellipsis: true,
+            sortable: true,
+            render: ({ createdAt }) => dayjs(createdAt).format('MMMM DD, YYYY'),
+          },
         ]}
         records={persons.data?.rows || []}
         page={page}
