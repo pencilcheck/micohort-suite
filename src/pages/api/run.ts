@@ -39,6 +39,13 @@ async function puppeteerHandler(persons: MicpaPerson[]) {
         return TokenizeDoc(ParseData(data));
       })
 
+      // reset since they might be outdated
+      await prisma.micpaLinkedinPerson.deleteMany({
+        where: {
+          micpaPersonId: person.id
+        }
+      });
+
       await prisma.micpaLinkedinPerson.createMany({
         data: tokenizedDocs.map(doc => ({
           information: doc,
@@ -67,9 +74,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           },
         },
         {
-          scrapedAt: {
-            lte: dayjs().subtract(6, 'months').format()
-          }
+          linkedinPersons: {
+            some: {
+              createdAt: {
+                lte: dayjs().subtract(6, 'months').format()
+              }
+            }
+          },
         }
       ]
     }
