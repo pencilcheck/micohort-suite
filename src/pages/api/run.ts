@@ -45,7 +45,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         }
       ]
     },
-    take: 10 // 10 person per API is good enough
+    take: 1 // 1 person to avoid timeout (let's test it out)
   })
 
   try {
