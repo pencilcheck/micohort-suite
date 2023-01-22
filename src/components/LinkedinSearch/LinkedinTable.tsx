@@ -42,9 +42,7 @@ export default function LinkedinTable({ search }: Props) {
 
   const persons = api.person.fetchAllLinkedinPersons.useQuery({ search: debouncedQuery, sortStatus: sortStatus, size: PAGE_SIZE, page });
 
-  const [selectedRecords, setSelectedRecords] = useState<(MicpaLinkedinPerson & {
-    micpaPerson: MicpaPerson;
-  })[]>([]);
+  const [selectedRecords, setSelectedRecords] = useState<Omit<MicpaLinkedinPerson & { micpaPerson: MicpaPerson }, "information">[]>([]);
 
   const {
     breakpoints: { xs: xsBreakpoint },
