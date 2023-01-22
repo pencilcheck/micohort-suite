@@ -81,7 +81,9 @@ export const personRouter = createTRPCRouter({
           },
           where: {
             micpaPerson: {
-              name: input.search || undefined
+              name: input.search ? {
+                contains: input.search
+              } : undefined
             }
           },
           skip: input.size * (input.page-1),
