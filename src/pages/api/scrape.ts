@@ -1,57 +1,76 @@
 // api/scrape.js
 import type { NextApiRequest, NextApiResponse } from 'next'
-import edgeChromium from 'chrome-aws-lambda'
+import { PrismaClient, type Prisma, type MicpaLinkedinPerson } from '@prisma/client'
+import dayjs from 'dayjs';
 
-// Importing Puppeteer core as default otherwise
-// it won't function correctly with "launch()"
-import puppeteer from 'puppeteer-core'
+import { scrapeProfiles, type PrepDocType } from '../../utils/puppeteer';
 
-import { LoginLinkedin, SearchPeople, ScrapePages, TokenizeDoc, ParseData } from '../../utils/puppeteer';
+const prisma = new PrismaClient()
 
-// You may want to change this if you're developing
-// on a platform different from macOS.
-// See https://github.com/vercel/og-image for a more resilient
-// system-agnostic options for Puppeteeer.
-const LOCAL_CHROME_EXECUTABLE = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-
-type Person = { name: string, id: string }
-
-async function puppeteerHandler(persons: Person[]) {
-  // Edge executable will return an empty string locally.
-  const executablePath = await edgeChromium.executablePath || LOCAL_CHROME_EXECUTABLE
-
-  const browser = await puppeteer.launch({
-    executablePath,
-    args: edgeChromium.args,
-    headless: true,
-  })
-  
-  const result = [];
-
+// We have 15 mins timeout, we need to breakup our procedures so it fits (puppeteer is very slow)
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const page = await browser.newPage()
-    await LoginLinkedin(page)
-    for (const person of persons) {
-      console.log("scraping person", person)
-      const hrefs = await SearchPeople(page, person.name)
-      const docs = await ScrapePages(page, hrefs)
-      const tokenizedDocs = docs.map((data) => ({ ...TokenizeDoc(ParseData(data)), personId: person.id }))
-      
-      result.push(tokenizedDocs);
+    const linkedinPersons = await prisma.micpaLinkedinPerson.findMany({
+      where: {
+        OR: [
+          {
+            scrapedAt: {
+              equals: null
+            },
+          },
+          {
+            scrapedAt: {
+              lte: dayjs().subtract(6, 'months').format()
+            }
+          }
+        ]
+      },
+      take: 1,
+    });
+
+    // chunking
+    const prepDocs = linkedinPersons
+      .filter<MicpaLinkedinPerson>((i): i is MicpaLinkedinPerson => !!(i?.information as PrepDocType)?.personId && !!(i?.information as PrepDocType)?.profile_url)
+      .map<PrepDocType>(p => p.information as PrepDocType);
+
+    // delete incompatible records
+    const incompatibleLinkedinPersons = linkedinPersons
+      .filter<MicpaLinkedinPerson>((i): i is MicpaLinkedinPerson => !(i?.information as PrepDocType)?.personId || !(i?.information as PrepDocType)?.profile_url)
+    await Promise.all(incompatibleLinkedinPersons.map(async (p) => {
+      await prisma.micpaLinkedinPerson.delete({
+        where: {
+          id: p.id,
+        },
+      });
+    }));
+
+    const documents = await scrapeProfiles(prepDocs);
+
+    if (documents) {
+      for (const docu of documents) {
+        const linkedinPersonId = linkedinPersons.find(p => p?.micpaPersonId === docu.personId)?.id
+        if (linkedinPersonId) {
+          await prisma.micpaLinkedinPerson.update({
+            data: {
+              information: docu as Prisma.InputJsonValue,
+              scrapedAt: dayjs().format(),
+            },
+            where: {
+              id: linkedinPersonId,
+            },
+          });
+        }
+      }
+    } else {
+      // could be timed out, try again later
+      return res.send({ status: 'BLOCK', message: 'Potential Linkedin security block' })
     }
   } catch (e) {
-    console.log(e)
-  } finally {
-    await browser.close();
+    const message = e instanceof Error ? e.message : String(e)
+    res.send({ status: 'Error', body: (req.body as Buffer).toString(), error: message })
   }
-  
-  return result;
-}
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const persons = JSON.parse(req.body as string) as Person[];
-  const result = await puppeteerHandler(persons);
-  res.send({ status: 'OK', data: result })
+  res.send({ status: 'OK' })
 }
 
 export default handler;

@@ -1,76 +1,83 @@
 // api/run.js
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PrismaClient } from '@prisma/client'
-
 import dayjs from 'dayjs';
+
+import { findProfilesV2 } from '../../utils/puppeteer';
 
 const prisma = new PrismaClient()
 
-interface ScraperResponse {
-  data: {[key: string]: string}[][];
-}
-
-async function puppeteerHandler(req: NextApiRequest, persons: { id: string, name: string}[]): Promise<ScraperResponse> {
-  const url = req.headers.origin ? `${req.headers.origin || ''}/api/scrape` : `http://${req.headers.host || 'localhost:3000'}/api/scrape`;
-  const response = await fetch(url, {
-    method: 'POST',
-    body: JSON.stringify(persons),
-  })
-  
-  return await response.json() as ScraperResponse;
-}
-
+// We have 15 mins timeout, we need to breakup our procedures so it fits (puppeteer is very slow)
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   // return persons who either hasn't scraped yet, or scraped more than 6 months ago
   const persons = await prisma.micpaPerson.findMany({
-    select: {
-      id: true,
-      name: true,
-    },
     where: {
-      OR: [
+      AND: [
         {
-          linkedinPersons: {
-            none: {}
+          scrapedAt: {
+            equals: null
           },
         },
         {
-          linkedinPersons: {
-            some: {
-              createdAt: {
-                lte: dayjs().subtract(6, 'months').format()
-              }
+          OR: [
+            {
+              linkedinPersons: {
+                none: {}
+              },
+            },
+            {
+              linkedinPersons: {
+                some: {
+                  createdAt: {
+                    lte: dayjs().subtract(6, 'months').format()
+                  }
+                }
+              },
             }
-          },
+          ]
         }
       ]
     },
     take: 1 // 1 person to avoid timeout (let's test it out)
   })
+  
+  for (const person of persons) {
+    try {
+      // only get profile_url in the Profile DocType object to speed things up
+      const infoDocs = await findProfilesV2(person);
+      
+      if (infoDocs) {
+        // reset since they might be outdated
+        await prisma.micpaLinkedinPerson.deleteMany({
+          where: {
+            micpaPersonId: person.id
+          }
+        });
 
-  try {
-    const response = await puppeteerHandler(req, persons);
-    
-    for (const personData of response.data) {
-      const personId = personData[0]?.personId;
-      if (!personId) continue;
+        await prisma.micpaLinkedinPerson.createMany({
+          data: infoDocs.map(doc => ({
+            information: doc,
+            micpaPersonId: person.id,
+          })),
+          skipDuplicates: true,
+        });
 
-      // reset since they might be outdated
-      await prisma.micpaLinkedinPerson.deleteMany({
-        where: {
-          micpaPersonId: personId
-        }
-      });
+        await prisma.micpaPerson.update({
+          data: {
+            scrapedAt: dayjs().format()
+          },
+          where: {
+            id: person.id
+          }
+        });
+      } else {
+        // could be timed out, try again later
+        return res.send({ status: 'BLOCK', message: 'Potential Linkedin security block' })
+      }
 
-      await prisma.micpaLinkedinPerson.createMany({
-        data: personData.map((doc: {[key: string]: any}) => ({
-          information: doc,
-          micpaPersonId: personId,
-        })) || [],
-        skipDuplicates: true,
-      })
+    } catch (e) {
+      console.log((e instanceof Error) ? e.message : String(e))
     }
-  } catch (e) {
   }
 
   res.send({ status: 'OK' })
