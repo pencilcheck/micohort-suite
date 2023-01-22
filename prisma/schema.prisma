@@ -83,12 +83,14 @@ model MicpaPerson {
     email               String
     company             String
     address             String?
+    scrapedAt           DateTime? // it is likely we can't find the person on linkedin so we need a flag to tell us if we tried it or not
     mailingLists        MailingListsOnPersons[]
     linkedinPersons     MicpaLinkedinPerson[]
 }
 
 model MicpaLinkedinPerson {
     id                  String          @id @default(cuid())
+    scrapedAt           DateTime?
     information         Json
     micpaPersonId       String
     micpaPerson         MicpaPerson     @relation(fields: [micpaPersonId], references: [id], onDelete: Cascade)

@@ -36,9 +36,29 @@ export const personRouter = createTRPCRouter({
       };
     }),
 
+  fetchOneLinkedinPerson: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const result = ctx.prisma.micpaLinkedinPerson.findUnique({
+        where: {
+          id: input.id
+        },
+        include: {
+          micpaPerson: true
+        }
+      })
+
+      return result;
+    }),
+
   fetchAllLinkedinPersons: publicProcedure
     .input(
       z.object({
+        search: z.string().optional(),
         sortStatus: z.object({
           columnAccessor: z.string(),
           direction: z.string(),
@@ -51,15 +71,25 @@ export const personRouter = createTRPCRouter({
       const result = await ctx.prisma.$transaction([
         ctx.prisma.micpaLinkedinPerson.count(),
         ctx.prisma.micpaLinkedinPerson.findMany({
-          include: {
+          // cannot select information as it is too big will cause sort to go out of memory from mysql
+          select: {
+            id: true,
+            scrapedAt: true,
+            micpaPersonId: true,
+            createdAt: true,
             micpaPerson: true,
+          },
+          where: {
+            micpaPerson: {
+              name: input.search || undefined
+            }
           },
           skip: input.size * (input.page-1),
           take: input.size,
           orderBy: set({}, input.sortStatus?.columnAccessor || 'micpaPerson.name', input.sortStatus?.direction),
         })
       ]);
-
+      
       return {
         total: result[0],
         rows: result[1],

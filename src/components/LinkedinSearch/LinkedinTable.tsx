@@ -1,14 +1,16 @@
 import { Center, Box, Button, createStyles, Group, Stack, Text, useMantineTheme } from '@mantine/core';
 import { closeAllModals, openModal } from '@mantine/modals';
+import { useDebouncedValue } from '@mantine/hooks';
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconEdit, IconTrash, IconTrashX } from '@tabler/icons';
 import { MicpaPerson, MicpaLinkedinPerson } from '@prisma/client';
 
 import { api } from "../../utils/api";
 import { JSONObject } from 'superjson/dist/types';
+import LinkedinModal from './LinkedinModal';
 
 const useStyles = createStyles((theme) => ({
   modal: { width: 800, height: "100%" },
@@ -21,7 +23,11 @@ const useStyles = createStyles((theme) => ({
 
 const PAGE_SIZE = 100;
 
-export default function LinkedinTable() {
+interface Props {
+  search?: string;
+}
+
+export default function LinkedinTable({ search }: Props) {
   const [page, setPage] = useState(1);
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({ columnAccessor: 'micpaPerson.name', direction: 'asc' });
 
@@ -30,7 +36,11 @@ export default function LinkedinTable() {
     setSortStatus(status);
   };
 
-  const persons = api.person.fetchAllLinkedinPersons.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page });
+  const theme = useMantineTheme();
+
+  const [debouncedQuery] = useDebouncedValue(search, 200);
+
+  const persons = api.person.fetchAllLinkedinPersons.useQuery({ search: debouncedQuery, sortStatus: sortStatus, size: PAGE_SIZE, page });
 
   const [selectedRecords, setSelectedRecords] = useState<(MicpaLinkedinPerson & {
     micpaPerson: MicpaPerson;
@@ -67,33 +77,20 @@ export default function LinkedinTable() {
             ellipsis: true,
             sortable: true,
           },
+          //{
+            //accessor: 'information',
+            //title: 'Information',
+            //width: 150,
+            //sortable: false,
+            //visibleMediaQuery: aboveXsMediaQuery,
+            //render: ({ information }) => JSON.stringify(information)
+          //},
           {
-            accessor: 'micpaPerson.email',
-            width: 150,
-            sortable: true,
-            visibleMediaQuery: aboveXsMediaQuery,
-          },
-          {
-            accessor: 'micpaPerson.company',
-            title: 'Company',
-            width: 150,
-            sortable: true,
-            visibleMediaQuery: aboveXsMediaQuery,
-          },
-          {
-            accessor: 'information',
-            title: 'Information',
-            width: 150,
-            sortable: false,
-            visibleMediaQuery: aboveXsMediaQuery,
-            render: ({ information }) => JSON.stringify(information)
-          },
-          {
-            accessor: 'createdAt',
+            accessor: 'scrapedAt',
             width: 100,
             ellipsis: true,
             sortable: true,
-            render: ({ createdAt }) => dayjs(createdAt).format('MMMM DD, YYYY'),
+            render: ({ scrapedAt }) => dayjs(scrapedAt).format('MMMM DD, YYYY'),
           },
         ]}
         records={persons.data?.rows || []}
@@ -105,17 +102,17 @@ export default function LinkedinTable() {
         onSortStatusChange={handleSortStatusChange}
         selectedRecords={selectedRecords}
         onSelectedRecordsChange={setSelectedRecords}
-        onRowClick={({ information, micpaPerson }) =>
+        onRowClick={({ id, micpaPerson }) =>
           openModal({
             title: micpaPerson.name,
             classNames: { modal: classes.modal, title: classes.modalTitle },
+            size: "auto",
+            overlayColor: theme.colorScheme === 'dark' ? theme.colors.dark[9] : theme.colors.gray[2],
+            overlayOpacity: 0.55,
+            overlayBlur: 3,
+            overflow: "inside",
             children: (
-              <Stack>
-                <Center>
-                  <a target="_blank" rel="noreferrer" href={(information as JSONObject)?.url as string}>Linkedin URL</a>
-                </Center>
-                <Button onClick={() => closeAllModals()}>Close</Button>
-              </Stack>
+              <LinkedinModal id={id} />
             )
           })
         }

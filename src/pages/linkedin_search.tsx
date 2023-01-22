@@ -6,6 +6,8 @@ import ApplicationContainer from "../components/ApplicationContainer";
 
 import { api } from "../utils/api";
 import LinkedinTable from "../components/LinkedinSearch/LinkedinTable";
+import SearchInput from "../components/LinkedinSearch/SearchInput";
+import { useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   title: {
@@ -22,6 +24,8 @@ const useStyles = createStyles((theme) => ({
 
 const Page: NextPage = () => {
   const { classes } = useStyles();
+  const [search, setSearch] = useState("");
+  
   return (
     <>
       <Head>
@@ -36,7 +40,8 @@ const Page: NextPage = () => {
               Linkedin scrape profile search
             </Title>
           </Box>
-          <LinkedinTable />
+          <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} />
+          <LinkedinTable search={search} />
         </Stack>
       </ApplicationContainer>
     </>
