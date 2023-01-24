@@ -27,6 +27,7 @@ export const serverSchema = z.object({
   SCRAPER_PASSWORD: z.string(),
   //DISCORD_CLIENT_ID: z.string(),
   //DISCORD_CLIENT_SECRET: z.string(),
+  SITE_PASSWORD: z.string(),
 });
 
 /**
@@ -47,6 +48,7 @@ export const serverEnv = {
   SCRAPER_PASSWORD: process.env.SCRAPER_PASSWORD,
   //DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
   //DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
+  SITE_PASSWORD: process.env.SITE_PASSWORD,
 };
 
 /**
@@ -56,6 +58,7 @@ export const serverEnv = {
  */
 export const clientSchema = z.object({
   // NEXT_PUBLIC_CLIENTVAR: z.string(),
+  NEXT_PUBLIC_SITE_READ_COOKIE: z.string(),
 });
 
 /**
@@ -66,4 +69,5 @@ export const clientSchema = z.object({
  */
 export const clientEnv = {
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+  NEXT_PUBLIC_SITE_READ_COOKIE: 'src',
 };

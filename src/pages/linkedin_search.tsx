@@ -8,6 +8,9 @@ import { api } from "../utils/api";
 import LinkedinTable from "../components/LinkedinSearch/LinkedinTable";
 import SearchInput from "../components/LinkedinSearch/SearchInput";
 import { useEffect, useState } from "react";
+import { AppPageProps } from "./_app";
+import { useRouter } from "next/router";
+import Login from "./login";
 
 const useStyles = createStyles((theme) => ({
   title: {
@@ -22,9 +25,15 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const Page: NextPage = () => {
+const Page = ({ hasReadPermission }: AppPageProps) => {
   const { classes } = useStyles();
   const [search, setSearch] = useState("");
+
+  const router = useRouter();
+
+  if (!hasReadPermission) {
+    return <Login redirectPath={router.asPath} />
+  }
   
   return (
     <>
