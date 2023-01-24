@@ -5,16 +5,19 @@ export default {
     name: "micohort-suite",
     region: "us-east-1",
   }),
-  stacks: async (app) => {
-    app.stack(function Web(ctx) {
+  stacks: async (app: any) => {
+    app.stack(function Web(ctx: any) {
       new NextjsSite(ctx.stack, "MicohortSuite", {
         defaults: {
           function: {
-            runtime: "nodejs14.x", // this doesn't work
-            timeout: 900, // this doesn't work
+            timeout: 900,
+            memorySize: 1500,
           }
         },
       })
     });
+    app.setDefaultFunctionProps({
+      runtime: "nodejs14.x",
+    })
   },
 }
