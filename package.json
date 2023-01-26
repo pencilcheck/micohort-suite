@@ -30,6 +30,7 @@
     "@next-auth/prisma-adapter": "^1.0.5",
     "@next/font": "^13.1.2",
     "@prisma/client": "^4.8.0",
+    "@react-spring/web": "^9.6.1",
     "@tabler/icons": "^1.119.0",
     "@tanstack/react-query": "^4.20.0",
     "@trpc/client": "^10.8.1",
@@ -48,9 +49,11 @@
     "puppeteer-core": "~10.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "string-similarity": "^4.0.4",
     "superjson": "1.9.1",
     "universal-cookie": "^4.0.4",
-    "zod": "^3.20.2"
+    "zod": "^3.20.2",
+    "zod-prisma-types": "^1.6.8"
   },
   "devDependencies": {
     "@types/async": "^3.2.16",
@@ -59,6 +62,7 @@
     "@types/prettier": "^2.7.2",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.10",
+    "@types/string-similarity": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^5.47.1",
     "@typescript-eslint/parser": "^5.47.1",
     "autoprefixer": "^10.4.7",
@@ -69,7 +73,7 @@
     "prettier": "^2.8.1",
     "prettier-plugin-tailwindcss": "^0.2.1",
     "prisma": "^4.8.0",
-    "sst": "2.0.0-rc.41",
+    "sst": "2.0.0-rc.49",
     "tailwindcss": "^3.2.0",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.4"
