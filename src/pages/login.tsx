@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { PasswordInput, Checkbox, Button, Group, Box } from '@mantine/core';
 import { showNotification, useNotifications } from '@mantine/notifications';
 import { useForm } from '@mantine/form';
@@ -17,12 +17,12 @@ interface FormValues {
 
 const Login = ({ redirectPath }: Props) => {
   const { notifications, queue } = useNotifications();
-  const cookies = new Cookies()
   const form = useForm({
     initialValues: {
       password: '',
     },
   });
+  const cookies = new Cookies()
 
   const onLogin = ({ password }: FormValues) => {
     cookies.set(env.NEXT_PUBLIC_SITE_READ_COOKIE, password, {

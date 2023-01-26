@@ -59,6 +59,7 @@ export const serverEnv = {
 export const clientSchema = z.object({
   // NEXT_PUBLIC_CLIENTVAR: z.string(),
   NEXT_PUBLIC_SITE_READ_COOKIE: z.string(),
+  NEXT_PUBLIC_SITE_HAS_PERMISSION: z.string(),
 });
 
 /**
@@ -70,4 +71,5 @@ export const clientSchema = z.object({
 export const clientEnv = {
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   NEXT_PUBLIC_SITE_READ_COOKIE: 'src',
+  NEXT_PUBLIC_SITE_HAS_PERMISSION: 'has-permission',
 };

@@ -1,4 +1,6 @@
 import App, { type AppType, type AppProps, AppContext } from "next/app";
+import toPairs from "lodash/toPairs";
+import pick from "lodash/pick";
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { MantineProvider } from '@mantine/core';
@@ -45,17 +47,26 @@ function MyApp({
       </NotificationsProvider>
     </MantineProvider>
   );
-};
+}
 
 MyApp.getInitialProps = async (appContext: AppContext) => {
   const appProps = await App.getInitialProps(appContext);
   
-  // server only
-  if (appContext.ctx.req) {
+  if (appContext.ctx.req && appContext.ctx.res) {
+    // server-side
     const { env: serverEnv } = await import("../env/server.mjs");
     const cookies = new Cookies(appContext.ctx.req?.headers?.cookie);
-    const password = cookies.get(env.NEXT_PUBLIC_SITE_READ_COOKIE) ?? "";
-    appProps.pageProps.hasReadPermission = password === serverEnv.SITE_PASSWORD;
+    const password = String(cookies.get(env.NEXT_PUBLIC_SITE_READ_COOKIE) ?? "");
+    (appProps.pageProps as AppPageProps).hasReadPermission = password === serverEnv.SITE_PASSWORD;
+
+    // update client-side cookies from server
+    cookies.set(env.NEXT_PUBLIC_SITE_HAS_PERMISSION, password === serverEnv.SITE_PASSWORD);
+    const setCookie = toPairs<string>(pick(cookies.getAll(), [env.NEXT_PUBLIC_SITE_HAS_PERMISSION])).map(p => `${p[0]}=${p[1]}`).join('; ');
+    appContext.ctx.res.setHeader('Set-Cookie', setCookie);
+  } else {
+    // read cookies password lock in client-side
+    const cookies = new Cookies();
+    (appProps.pageProps as AppPageProps).hasReadPermission = JSON.parse(cookies.get(env.NEXT_PUBLIC_SITE_HAS_PERMISSION) as string ?? 'false') as boolean;
   }
   
   return appProps;
