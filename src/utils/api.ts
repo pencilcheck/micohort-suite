@@ -30,6 +30,18 @@ export const api = createTRPCNext<AppRouter>({
        **/
       transformer: superjson,
 
+      
+      /**
+       * TanStack Query configuration
+       */
+      queryClientConfig: {
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+          }
+        }
+      },
+
       /**
        * Links used to determine request flow from client to server
        * @see https://trpc.io/docs/links
@@ -46,6 +58,7 @@ export const api = createTRPCNext<AppRouter>({
       ],
     };
   },
+
   /**
    * Whether tRPC should await queries when server rendering pages
    * @see https://trpc.io/docs/nextjs#ssr-boolean-default-false
