@@ -6,6 +6,10 @@ generator client {
     binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
 
+generator zod {
+  provider        = "zod-prisma-types"
+}
+
 datasource db {
     provider     = "mysql"
     // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
@@ -102,8 +106,8 @@ model MailingListsOnPersons {
     mailingList         MailingList     @relation(fields: [mailingListId], references: [id])
     personId            String
     person              MicpaPerson     @relation(fields: [personId], references: [id])
-    assignedAt DateTime                 @default(now())
-    assignedBy String
+    assignedAt          DateTime        @default(now())
+    assignedBy          String?         // once we have user login then we can use this field
 
     @@id([mailingListId, personId])
 }
