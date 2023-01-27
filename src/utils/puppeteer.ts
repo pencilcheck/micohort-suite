@@ -28,16 +28,45 @@ export type DocType = Partial<{
   name?: string;
   position?: string;
   profile_image?: string;
-} & UrlResponse & PrepDocType>;
+  compacted?: boolean;
+} & UrlResponse & PrepDocType & UrnLiFsd>;
+
+export type ComponentValue = {
+  title: string;
+  subComponents: string[];
+}
+
+type UrnLiFsd = {
+  [key: string]: TopComponent[] | string | ComponentValue[];
+}
 
 type Information = DocType;
 
 // LINKEDIN Voyager Internal ----- My best understanding of linkedin voyager response and they are constantly updating this format
 type Components = {
+  headerComponent?: {
+    title: {
+      text: string;
+    }
+  };
+  insightComponent?: {
+    text?: {
+      text?: {
+        text?: string;
+      }
+    }
+  };
   entityComponent?: {
     title: {
       text: string;
     };
+    caption: {
+      text?: string;
+    };
+    subtitle: {
+      text?: string;
+    };
+    subComponents?: SubComponents;
   };
   fixedListComponent?: {
     components: {
@@ -53,7 +82,13 @@ type Components = {
   };
 }
 
-type TopComponent = {
+type SubComponents = {
+  components: {
+    components: Components;
+  }[];
+}
+
+export type TopComponent = {
   components: Components;
 }
 
@@ -128,7 +163,7 @@ export async function initPage(): Promise<[Page, Browser]> {
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(600000);  // 60s timeout
   page.setDefaultTimeout(600000);  // 60s timeout
-  page.setUserAgent(
+  await page.setUserAgent(
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4182.0 Safari/537.36"
   )
 
@@ -385,14 +420,14 @@ export const toDoc = (information: Information[]): DocType => {
   return TokenizeDoc(ParseData(information));
 }
 
-export const TokenizeDoc = (doc: { [key: string]: string[] | unknown[] | string }): DocType => {
+export const TokenizeDoc = (doc: { [key: string]: boolean | string[] | unknown[] | string }): DocType => {
   return Object.keys(doc).reduce((init, k) => {
-    if (Array.isArray(doc[k]) && typeof doc[k]?.[0] === 'string') {
+    if (Array.isArray(doc[k]) && typeof (doc[k] as unknown[])?.[0] === 'string') {
       return {
         ...init,
         [k]: (doc[k] as string[])?.join(' ').trim(),
       }
-    } else if (Array.isArray(doc[k]) && doc[k]?.length === 0) {
+    } else if (Array.isArray(doc[k]) && (doc[k] as unknown[])?.length === 0) {
       return {
         ...init,
         [k]: '',
@@ -406,7 +441,7 @@ export const TokenizeDoc = (doc: { [key: string]: string[] | unknown[] | string 
   }, {})
 }
 
-export const ParseData = (data: DocType[]): { [key: string]: string[] | unknown[] | string } => {
+export const ParseData = (data: DocType[]): { [key: string]: boolean | string[] | unknown[] | string } => {
   // let's leave the complexity of parsing the response to the renderer, not the scraper
   const responses = (select(SEARCH.CARDS.path, data) as Included[][]).flat()
   const cardObj = responses
@@ -429,6 +464,7 @@ export const ParseData = (data: DocType[]): { [key: string]: string[] | unknown[
     profile_image: select(SEARCH.PROFILE_IMAGE, data),
     profile_url: select(SEARCH.PROFILE_URL, data),
     personId: select(SEARCH.PERSON_ID, data),
+    compacted: false,
     ...cardObj,
   };
 }
