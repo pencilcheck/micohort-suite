@@ -1,14 +1,13 @@
-import { type NextPage } from "next";
 import Head from "next/head";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { createStyles, Title, Stack, Button, Box } from "@mantine/core";
+import { createStyles, Title, Stack, Box } from "@mantine/core";
 import ApplicationContainer from "../components/ApplicationContainer";
 
 import { api } from "../utils/api";
 import LinkedinTable from "../components/LinkedinSearch/LinkedinTable";
 import SearchInput from "../components/LinkedinSearch/SearchInput";
 import { useEffect, useState } from "react";
-import { AppPageProps } from "./_app";
+import type { AppPageProps } from "./_app";
 import { useRouter } from "next/router";
 import Login from "./login";
 
@@ -30,6 +29,10 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
   const [search, setSearch] = useState("");
 
   const router = useRouter();
+  
+  useEffect(() => {
+    if (router.query.presearch) setSearch(router.query.presearch as string);
+  }, [router.query.presearch]);
 
   if (!hasReadPermission) {
     return <Login redirectPath={router.asPath} />
@@ -46,7 +49,7 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
         <Stack justify="flex-start" spacing="xs" sx={(theme) => ({ backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0], height: "100%" })}>
           <Box className="flex-1">
             <Title className={classes.title}>
-              Linkedin scrape profile search
+              Linkedin search
             </Title>
           </Box>
           <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} />

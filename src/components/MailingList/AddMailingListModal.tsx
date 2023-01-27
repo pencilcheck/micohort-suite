@@ -1,10 +1,12 @@
-import { Center, Code, Box, Image, Loader, Button, createStyles, Group, Stack, Text, useMantineTheme, AspectRatio, Card } from '@mantine/core';
+import { Center, Box, Image, Loader, Button, createStyles, Group, Stack, Text, useMantineTheme, AspectRatio, Card } from '@mantine/core';
 import { closeAllModals } from '@mantine/modals';
 import { IconEdit, IconTrash, IconTrashX } from '@tabler/icons';
 import { MicpaPerson, MicpaLinkedinPerson } from '@prisma/client';
 import dayjs from 'dayjs';
 
 import type { DocType } from '../../utils/puppeteer';
+
+import LinkedinPersonTable from "../LinkedinSearch/LinkedinPersonTable";
 
 import { api } from "../../utils/api";
 
@@ -57,9 +59,6 @@ export default function LinkedinModal({ id }: Props) {
             <Text className={classes.title} mt={5}>
               {person.data?.micpaPerson?.name}
             </Text>
-            <Code block mt={5}>
-              {JSON.stringify(person.data?.information, null, 4)}
-            </Code>
           </Card>
         )}
       </Center>

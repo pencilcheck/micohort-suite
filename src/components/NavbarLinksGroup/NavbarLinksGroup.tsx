@@ -53,9 +53,9 @@ interface LinksGroupProps {
 export function LinksGroup({ icon: Icon, label, initiallyOpened, path, links }: LinksGroupProps) {
   const router = useRouter();
   const { classes, theme } = useStyles();
-  const hasLinks = Array.isArray(links);
   const [opened, setOpened] = useState(initiallyOpened || false);
   const ChevronIcon = theme.dir === 'ltr' ? IconChevronRight : IconChevronLeft;
+  const hasLinks = Array.isArray(links);
   const items = (hasLinks ? links : []).map((link) => (
     <Text<'a'>
       component="a"

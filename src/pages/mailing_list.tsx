@@ -6,6 +6,7 @@ import { createStyles, Title, Stack, Button, Box } from "@mantine/core";
 import ApplicationContainer from "../components/ApplicationContainer";
 
 import { api } from "../utils/api";
+import MailingListTable from "../components/MailingList/MailingListTable";
 import { AppPageProps } from "./_app";
 import { useRouter } from "next/router";
 import Login from "./login";
@@ -25,7 +26,6 @@ const useStyles = createStyles((theme) => ({
 
 const Page = ({ hasReadPermission }: AppPageProps) => {
   const { classes } = useStyles();
-
   const router = useRouter();
 
   if (!hasReadPermission) {
@@ -46,7 +46,7 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
               Mailing list
             </Title>
           </Box>
-          <LinkedinPersonTable />
+          <MailingListTable />
         </Stack>
       </ApplicationContainer>
     </>
