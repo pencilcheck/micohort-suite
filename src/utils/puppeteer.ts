@@ -168,6 +168,7 @@ export async function initPage(): Promise<[Page, Browser]> {
 
   const browser = await puppeteer.launch({
     headless: true,
+    args: ['--no-sandbox'], // https://github.com/puppeteer/puppeteer/issues/3698
     ignoreHTTPSErrors: true,
     timeout: 60000,
   })
