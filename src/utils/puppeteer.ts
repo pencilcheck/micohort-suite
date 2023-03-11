@@ -13,7 +13,7 @@ import _ from 'lodash';
 // on a platform different from macOS.
 // See https://github.com/vercel/og-image for a more resilient
 // system-agnostic options for Puppeteeer.
-const LOCAL_CHROME_EXECUTABLE = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+//const LOCAL_CHROME_EXECUTABLE = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 const lambda = false;
 
 import { env } from "../env/server.mjs";
