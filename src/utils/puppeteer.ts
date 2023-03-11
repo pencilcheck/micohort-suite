@@ -1,7 +1,9 @@
 import type { MicpaPerson } from '@prisma/client';
-import edgeChromium from 'chrome-aws-lambda';
-import puppeteer from 'puppeteer-core';
-import type { Page, Browser } from 'puppeteer-core';
+import puppeteer from 'puppeteer';
+import type { Page, Browser } from 'puppeteer';
+//import edgeChromium from 'chrome-aws-lambda';
+//import puppeteer from 'puppeteer-core';
+//import type { Page, Browser } from 'puppeteer-core';
 import { mapLimit } from 'async';
 import select from '@gizt/selector';
 import fs from 'fs';
@@ -12,6 +14,7 @@ import _ from 'lodash';
 // See https://github.com/vercel/og-image for a more resilient
 // system-agnostic options for Puppeteeer.
 const LOCAL_CHROME_EXECUTABLE = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+const lambda = false;
 
 import { env } from "../env/server.mjs";
 
@@ -149,13 +152,22 @@ const SEARCH = {
 const API_ENDPOINT = "https://www.linkedin.com/voyager/api/graphql"
 
 export async function initPage(): Promise<[Page, Browser]> {
-  // Edge executable will return an empty string locally.
-  const executablePath = await edgeChromium.executablePath || LOCAL_CHROME_EXECUTABLE
+  if (lambda) {
+    // TODO REMOVE THIS AFTER TESTING ON RAILWAY WITHOUT LAMBDA
+    // Edge executable will return an empty string locally.
+    //const executablePath = await edgeChromium.executablePath || LOCAL_CHROME_EXECUTABLE
+
+    //const browser = await puppeteer.launch({
+      //executablePath,
+      //args: edgeChromium.args,
+      //headless: edgeChromium.headless,
+      //ignoreHTTPSErrors: true,
+      //timeout: 60000,
+    //})
+  }
 
   const browser = await puppeteer.launch({
-    executablePath,
-    args: edgeChromium.args,
-    headless: edgeChromium.headless,
+    headless: true,
     ignoreHTTPSErrors: true,
     timeout: 60000,
   })
