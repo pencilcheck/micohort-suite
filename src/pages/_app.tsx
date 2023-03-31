@@ -1,9 +1,10 @@
-import App, { type AppType, type AppProps, AppContext } from "next/app";
+import App from "next/app";
+import type { AppType, AppProps, AppContext } from "next/app";
 import toPairs from "lodash/toPairs";
 import pick from "lodash/pick";
-import { type Session } from "next-auth";
+import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
-import { MantineProvider } from '@mantine/core';
+import { MantineProvider, createEmotionCache } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import type { NextRouter } from 'next/router';
 import { NotificationsProvider } from '@mantine/notifications';
@@ -18,6 +19,8 @@ import { api } from "../utils/api";
 
 import "../styles/globals.css";
 
+const myCache = createEmotionCache({ key: 'mantine', prepend: false });
+
 export interface AppPageProps {
   hasReadPermission: boolean;
   session: Session | null;
@@ -31,6 +34,7 @@ function MyApp({
     <MantineProvider
       withGlobalStyles
       withNormalizeCSS
+      emotionCache={myCache}
       theme={{
         /** Put your mantine theme override here */
         colorScheme: 'light',

@@ -53,7 +53,7 @@ export default function MailingListTable() {
   const MailingListTable = DataTable<ColumnType>;
 
   return (<>
-    <Box sx={{ height: 500 }}>
+    <Box sx={{ height: 650 }}>
       <MailingListTable
         withBorder
         borderRadius="sm"

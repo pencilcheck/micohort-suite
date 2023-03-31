@@ -4,6 +4,7 @@
 generator client {
     provider      = "prisma-client-js"
     binaryTargets = ["native", "rhel-openssl-1.0.x"]
+    previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
 generator zod {
@@ -81,6 +82,12 @@ model MailingList {
     persons       MailingListsOnPersons[]
 }
 
+model KeywordFilterDropdown {
+    id            String    @id @default(cuid())
+    label         String
+    value         String
+}
+
 model MicpaPerson {
     id                  String          @id @default(cuid())
     name                String
@@ -90,6 +97,65 @@ model MicpaPerson {
     scrapedAt           DateTime? // it is likely we can't find the person on linkedin so we need a flag to tell us if we tried it or not
     mailingLists        MailingListsOnPersons[]
     linkedinPersons     MicpaLinkedinPerson[]
+    orders              MicpaOrder[] // used for spending, might not correspond 1-1 to credit earned
+    subscribeOrderDetails  MicpaOrderDetail[]
+    educationUnits      MicpaEducationUnit[] // used for credit earning
+}
+
+model MicpaOrder {
+    id                  String            @id @default(cuid())
+    orderDate           DateTime?
+    status              String
+    customerId          String? // not all customer id match MicpaPerson record, meaning "customer" will be empty even though this is not empty
+    customer            MicpaPerson?      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    orderDetails        MicpaOrderDetail[]
+    educationUnits      MicpaEducationUnit[]
+
+    @@index([customerId, orderDate])
+}
+
+// only CPE products, not cancelled, a parent product
+model MicpaProduct {
+    id                  String            @id @default(cuid())
+    webName             String
+    name                String
+    code                String
+    startAt             DateTime?
+    subscriptionStartAt DateTime?
+    productCategory     String
+    orderDetails        MicpaOrderDetail[]
+    educationUnits      MicpaEducationUnit[]
+
+    @@fulltext([webName, name, code])
+}
+
+model MicpaOrderDetail {
+    id                  String            @id @default(cuid())
+    productId           String? // some product id aren't in product table
+    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: Cascade)
+    orderId             String // person who paid for the order
+    order               MicpaOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    subscriberId        String?  // person who benefit for the membership dues product (not necessarily the one paying it)
+    subscriber          MicpaPerson?      @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+    spending            Float?
+}
+
+model MicpaEducationUnit {
+    id                  String            @id @default(cuid())
+    isThirdParty        Boolean
+    externalSource      String? // third party priority, but if empty, fill the associated product name, this column will be used for full text
+    productId           String? // could be null if 3rd party
+    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: Cascade)
+    orderId             String? // can get person who ordered it, sometimes this is null
+    order               MicpaOrder?       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    personId            String?  // person who get the credits, if not filled it could be ignored
+    person              MicpaPerson?      @relation(fields: [personId], references: [id], onDelete: Cascade)
+    educationCategory   String
+    creditEarned        Float?            @default(0)
+    creditAt            DateTime?
+
+    @@index([productId, orderId, creditAt])
+    @@fulltext([externalSource])
 }
 
 model MicpaLinkedinPerson {

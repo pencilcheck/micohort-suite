@@ -59,7 +59,7 @@ export default function LinkedinTable({ search }: Props) {
 
   return (
     // place the data table in a height-restricted container to make it vertically-scrollable
-    <Box sx={{ height: 500 }}>
+    <Box sx={{ height: 650 }}>
       <LinkedinTable
         withBorder
         borderRadius="sm"

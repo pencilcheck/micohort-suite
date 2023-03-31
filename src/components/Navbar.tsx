@@ -2,14 +2,7 @@ import { Image, Navbar, Group, Code, ScrollArea, createStyles } from '@mantine/c
 import {
   IconNotes,
   IconBrandLinkedin,
-  IconCalendarStats,
-  IconGauge,
-  IconPresentationAnalytics,
-  IconFileAnalytics,
-  IconAdjustments,
-  IconLock,
 } from '@tabler/icons';
-import { UserButton } from './UserButton/UserButton';
 import { LinksGroup } from './NavbarLinksGroup/NavbarLinksGroup';
 
 const mockdata = [
@@ -23,39 +16,6 @@ const mockdata = [
     path: '/linkedin_search',
     icon: IconBrandLinkedin,
   },
-  //{ label: 'Dashboard', icon: IconGauge },
-  //{
-    //label: 'Market news',
-    //icon: IconNotes,
-    //initiallyOpened: true,
-    //links: [
-      //{ label: 'Overview', link: '/' },
-      //{ label: 'Forecasts', link: '/' },
-      //{ label: 'Outlook', link: '/' },
-      //{ label: 'Real time', link: '/' },
-    //],
-  //},
-  //{
-    //label: 'Releases',
-    //icon: IconCalendarStats,
-    //links: [
-      //{ label: 'Upcoming releases', link: '/' },
-      //{ label: 'Previous releases', link: '/' },
-      //{ label: 'Releases schedule', link: '/' },
-    //],
-  //},
-  //{ label: 'Analytics', icon: IconPresentationAnalytics },
-  //{ label: 'Contracts', icon: IconFileAnalytics },
-  //{ label: 'Settings', icon: IconAdjustments },
-  //{
-    //label: 'Security',
-    //icon: IconLock,
-    //links: [
-      //{ label: 'Enable 2FA', link: '/' },
-      //{ label: 'Change password', link: '/' },
-      //{ label: 'Recovery codes', link: '/' },
-    //],
-  //},
 ];
 
 const useStyles = createStyles((theme) => ({
@@ -92,7 +52,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export default function ApplicationContainer() {
+export default function NavBar() {
   const { classes } = useStyles();
   const links = mockdata.map((item) => <LinksGroup {...item} key={item.label} />);
 
