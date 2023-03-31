@@ -26,6 +26,7 @@ specifiers:
   '@trpc/react-query': ^10.8.1
   '@trpc/server': ^10.8.1
   '@types/async': ^3.2.16
+  '@types/file-saver': ^2.0.5
   '@types/lodash': ^4.14.191
   '@types/node': ^18.11.18
   '@types/node-fetch': ^2.6.3
@@ -125,6 +126,7 @@ devDependencies:
   '@testing-library/jest-dom': 5.16.5
   '@testing-library/react': 14.0.0_biqbaboplfbrettd7655fr4n2y
   '@types/async': 3.2.16
+  '@types/file-saver': 2.0.5
   '@types/lodash': 4.14.191
   '@types/node': 18.11.18
   '@types/node-fetch': 2.6.3
@@ -3422,6 +3424,10 @@ packages:
     dependencies:
       '@types/ms': 0.7.31
     dev: false
+
+  /@types/file-saver/2.0.5:
+    resolution: {integrity: sha512-zv9kNf3keYegP5oThGLaPk8E081DFDuwfqjtiTzm6PoxChdJ1raSuADf2YGCVIyrSynLrgc8JWv296s7Q7pQSQ==}
+    dev: true
 
   /@types/graceful-fs/4.1.6:
     resolution: {integrity: sha512-Sig0SNORX9fdW+bQuTEovKj3uHcUL6LQKbCrrqb1X7J6/ReAbhCXRAhc+SMejhLELFj2QcyuxmUooZ4bt5ReSw==}

@@ -72,7 +72,7 @@ export const cpeProgramRouter = createTRPCRouter({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       XLSX.utils.book_append_sheet(wb, ws, "Report");
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      const buffer = XLSX.write(wb, { type: "base64" });
+      const buffer = XLSX.write(wb, { type: "base64" }) as string;
 
       return {
         buffer

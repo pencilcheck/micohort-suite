@@ -50,7 +50,7 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
   useEffect(() => {
     if (excelBlobQuery.isSuccess) {
       const blob = new Blob(
-        [new Buffer(excelBlobQuery?.data?.buffer.replace(/^[\w\d;:\/]+base64\,/g, ''), 'base64')],
+        [new Buffer(excelBlobQuery?.data?.buffer?.replace(/^[\w\d;:\/]+base64\,/g, '') || '', 'base64')],
         {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}
       );
       saveAs(blob, 'test.xlsx');

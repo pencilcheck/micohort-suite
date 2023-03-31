@@ -31,19 +31,19 @@ const useStyles = createStyles((theme) => ({
 
 const Page = ({ hasReadPermission }: AppPageProps) => {
   const { classes } = useStyles();
-  const [micpaPersonId, setMicpaPersonId] = useState();
+  const [micpaPersonId, setMicpaPersonId] = useState<string>();
   const [scrape, setScrape] = useState(false);
   const [application, setApplication] = useAtom(applicationAtom)
   const scrapeMutation = api.linkedinRouter.scrapeLinkedinPersons.useMutation();
 
   const router = useRouter();
 
-  const handleScrapeClick = async () => {
+  const handleScrapeClick = () => {
     scrapeMutation.mutate({ scrapeProfiles: application?.scrapeProfiles })
   }
   
   useEffect(() => {
-    setMicpaPersonId(router.query.micpaPersonId as string);
+    setMicpaPersonId(router.query.micpaPersonId as string || '');
   }, [router.query.micpaPersonId]);
 
   if (!hasReadPermission) {
