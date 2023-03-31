@@ -1,4 +1,4 @@
-import { createStyles, Title, Text, Center, Button, Container, Group } from '@mantine/core';
+import { createStyles, Title, Text, Center, Button, Container, Group, px } from '@mantine/core';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -11,7 +11,7 @@ const useStyles = createStyles((theme) => ({
     fontWeight: 900,
     fontSize: 220,
     lineHeight: 1,
-    marginBottom: theme.spacing.xl * 1.5,
+    marginBottom: px(theme.spacing.xl) * 1.5,
     color: theme.colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[2],
 
     [theme.fn.smallerThan('sm')]: {
@@ -32,8 +32,8 @@ const useStyles = createStyles((theme) => ({
   description: {
     maxWidth: 500,
     margin: 'auto',
-    marginTop: theme.spacing.xl,
-    marginBottom: theme.spacing.xl * 1.5,
+    marginTop: px(theme.spacing.xl) * 1.5,
+    marginBottom: px(theme.spacing.xl) * 1.5,
   },
 }));
 

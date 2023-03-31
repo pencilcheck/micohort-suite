@@ -68,9 +68,11 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
             title="Filter"
             padding="xl"
             size={360}
-            overlayColor={theme.colorScheme === 'dark' ? theme.colors.dark[9] : theme.colors.gray[2]}
-            overlayOpacity={0.25}
-            overlayBlur={0}
+            overlayProps={{
+              color: theme.colorScheme === 'dark' ? theme.colors.dark[9] : theme.colors.gray[2],
+              opacity: 0.25,
+              blur: 0
+            }}
             closeOnClickOutside
           >
             <Alert icon={<IconAlertCircle size="1rem" />} title="Warning!" color="red">

@@ -6,8 +6,7 @@ import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { MantineProvider, createEmotionCache } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
-import type { NextRouter } from 'next/router';
-import { NotificationsProvider } from '@mantine/notifications';
+import { Notifications } from '@mantine/notifications';
 import { Source_Sans_Pro } from '@next/font/google';
 import Cookies from "universal-cookie";
 
@@ -42,13 +41,12 @@ function MyApp({
         headings: { fontFamily: source.style.fontFamily }
       }}
     >
-      <NotificationsProvider>
-        <ModalsProvider>
-          <SessionProvider session={session}>
-            <Component {...pageProps} />
-          </SessionProvider>
-        </ModalsProvider>
-      </NotificationsProvider>
+      <Notifications />
+      <ModalsProvider>
+        <SessionProvider session={session}>
+          <Component {...pageProps} />
+        </SessionProvider>
+      </ModalsProvider>
     </MantineProvider>
   );
 }

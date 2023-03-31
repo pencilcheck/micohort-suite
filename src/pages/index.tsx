@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 
 import { api } from "../utils/api";
 
-import { createStyles, Group, Image, Container, Title, Text, Button } from '@mantine/core';
+import { createStyles, Group, Image, Container, Title, Text, Button, px } from '@mantine/core';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -16,8 +16,8 @@ const useStyles = createStyles((theme) => ({
     backgroundPosition: 'center',
     backgroundImage:
       'linear-gradient(250deg, rgba(130, 201, 30, 0) 0%, #062343 70%), url(https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1080&q=80)',
-    paddingTop: theme.spacing.xl * 3,
-    paddingBottom: theme.spacing.xl * 3,
+    paddingTop: px(theme.spacing.xl) * 3,
+    paddingBottom: px(theme.spacing.xl) * 3,
   },
 
   inner: {
@@ -36,9 +36,9 @@ const useStyles = createStyles((theme) => ({
   },
 
   content: {
-    paddingTop: theme.spacing.xl * 2,
-    paddingBottom: theme.spacing.xl * 2,
-    marginRight: theme.spacing.xl * 3,
+    paddingTop: px(theme.spacing.xl) * 2,
+    paddingBottom: px(theme.spacing.xl) * 2,
+    marginRight: px(theme.spacing.xl) * 3,
 
     [theme.fn.smallerThan('md')]: {
       marginRight: 0,

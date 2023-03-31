@@ -136,7 +136,7 @@ export default function LinkedinTable({ filter }: Props) {
               onClick: () => 
                 openModal({
                   title: name,
-                  classNames: { modal: classes.modal, title: classes.modalTitle },
+                  classNames: { content: classes.modal, title: classes.modalTitle },
                   children: (
                     <Stack>
                       <Group>
