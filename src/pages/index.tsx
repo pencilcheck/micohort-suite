@@ -126,6 +126,16 @@ const Home: NextPage = () => {
               >
                 Linkedin search
               </Button>
+              <Button
+                onClick={() => void router.push('/cpe_program')}
+                variant="gradient"
+                gradient={{ from: 'yellow', to: 'green' }}
+                size="xl"
+                className={classes.control}
+                mt={40}
+              >
+                CPE Program
+              </Button>
             </Group>
           </div>
         </div>

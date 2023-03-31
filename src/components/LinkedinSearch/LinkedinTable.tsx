@@ -1,10 +1,10 @@
 import { Center, Box, Button, createStyles, Group, Stack, Text, useMantineTheme } from '@mantine/core';
 import { closeAllModals, openModal } from '@mantine/modals';
-import { useDebouncedValue } from '@mantine/hooks';
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
+import uniqBy from 'lodash/uniqBy';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconEdit, IconTrash, IconTrashX } from '@tabler/icons';
 import { MicpaPerson, MicpaLinkedinPerson } from '@prisma/client';
 
@@ -13,6 +13,8 @@ import { JSONObject, JSONValue } from 'superjson/dist/types';
 import LinkedinModal from './LinkedinModal';
 import { ComponentValue, DocType } from '../../utils/puppeteer';
 import CompareCell from './CompareCell';
+import { useAtom } from 'jotai';
+import { applicationAtom } from '../../utils/state';
 
 const useStyles = createStyles((theme) => ({
   modal: { width: 800, height: "100%" },
@@ -26,22 +28,33 @@ const useStyles = createStyles((theme) => ({
 const PAGE_SIZE = 20;
 
 interface Props {
-  search?: string;
+  micpaPersonId?: string;
 }
 
 type ColumnType = MicpaLinkedinPerson & { micpaPerson: MicpaPerson };
 
-export default function LinkedinTable({ search }: Props) {
+export default function LinkedinTable({ micpaPersonId }: Props) {
   const { classes } = useStyles();
   const [page, setPage] = useState(1);
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({ columnAccessor: 'micpaPerson.name', direction: 'asc' });
   const [selectedRecords, setSelectedRecords] = useState<ColumnType[]>([]);
+  const [application, setApplication] = useAtom(applicationAtom)
 
   const theme = useMantineTheme();
 
-  const [debouncedQuery] = useDebouncedValue(search, 200);
+  const persons = api.person.fetchLinkedinSearch.useQuery({ micpaPersonId: micpaPersonId, sortStatus: sortStatus, size: PAGE_SIZE, page });
 
-  const persons = api.person.fetchLinkedinSearch.useQuery({ search: debouncedQuery, sortStatus: sortStatus, size: PAGE_SIZE, page });
+  // set scrapeIds so linkedin scrape button will work
+  useEffect(() => {
+    if (persons.isSuccess) {
+      setApplication(v => {
+        return {
+          ...v,
+          scrapeProfiles: uniqBy(persons.data?.rows?.map(p => ({ id: p.micpaPerson.id, name: p.micpaPerson.name })), 'id') || [],
+        }
+      })
+    }
+  }, [persons, setApplication])
 
   const {
     breakpoints: { xs: xsBreakpoint },

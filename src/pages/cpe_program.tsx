@@ -1,10 +1,11 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import { useState } from "react";
-import { IconAdjustments, IconAlertCircle } from "@tabler/icons";
+import { saveAs } from "file-saver";
+import { useEffect, useState } from "react";
+import { IconAdjustments, IconAlertCircle, IconTableExport } from "@tabler/icons";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { createStyles, Title, Stack, Button, Box, Drawer, useMantineTheme, MultiSelect, ActionIcon, Alert, SegmentedControl, Group } from "@mantine/core";
+import { createStyles, Text, Title, Stack, Button, Box, Drawer, useMantineTheme, MultiSelect, ActionIcon, Alert, SegmentedControl, Group, Divider } from "@mantine/core";
 import ApplicationContainer from "../components/ApplicationContainer";
 
 import { api } from "../utils/api";
@@ -12,7 +13,9 @@ import PersonsTable from "../components/CPEProgram/PersonsTable";
 import { AppPageProps } from "./_app";
 import { useRouter } from "next/router";
 import Login from "./login";
-//import { MonthPicker } from "@mantine/dates";
+import { PersonsProps } from "../etl/CreditEarning";
+import { MonthPicker } from "@mantine/dates";
+import dayjs from "dayjs";
 
 const useStyles = createStyles((theme) => ({
   title: {
@@ -31,13 +34,35 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
   const { classes } = useStyles();
   const theme = useMantineTheme();
   const router = useRouter();
-  const [period, setPeriod] = useState<[Date | null, Date | null]>([null, null]);
+  const [exportOn, setExportOn] = useState<boolean>(false)
+  const [period, setPeriod] = useState<[Date | null, Date | null]>([dayjs().subtract(1, 'year').toDate(), dayjs().toDate()]);
+  const [validPeriod, setValidPeriod] = useState<[Date, Date]>();
   const [value, setValue] = useState<string[]>([])
-  const [source, setSource] = useState<string>("both")
+  const [source, setSource] = useState<PersonsProps["source"]>("both")
   const [searchOpen, setSearchOpen] = useState(true)
   const keywordDropdown = api.cpeProgram.fetchDropdownAll.useQuery();
   const createDropdownMutation = api.cpeProgram.createDropdown.useMutation();
+  const excelBlobQuery = api.cpeProgram.report.useQuery(
+    { keywords: value, source: source, creditDatePeriod: validPeriod },
+    { enabled: exportOn }
+  );
 
+  useEffect(() => {
+    if (excelBlobQuery.isSuccess) {
+      const blob = new Blob(
+        [new Buffer(excelBlobQuery?.data?.buffer.replace(/^[\w\d;:\/]+base64\,/g, ''), 'base64')],
+        {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}
+      );
+      saveAs(blob, 'test.xlsx');
+      setExportOn(false);
+    }
+  }, [excelBlobQuery, exportOn])
+
+  useEffect(() => {
+    if (period[0] && period[1]) {
+      setValidPeriod(period as [Date, Date])
+    }
+  }, [period])
 
   if (!hasReadPermission) {
     return <Login redirectPath={router.asPath} />
@@ -56,11 +81,13 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
             <Title className={classes.title}>
               CPE Program
             </Title>
-            <ActionIcon onClick={() => setSearchOpen((v) => !v)} color="indigo" size="xl" radius="xl" variant="filled">
-              <IconAdjustments size="2.125rem" />
-            </ActionIcon>
+            <Box className="flex justify-between w-[100px]">
+              <ActionIcon onClick={() => setSearchOpen((v) => !v)} color="indigo" size="xl" radius="xl" variant="filled">
+                <IconAdjustments size="2.125rem" />
+              </ActionIcon>
+            </Box>
           </Box>
-          <PersonsTable keywords={value} source={source} />
+          <PersonsTable keywords={value} source={source} creditDatePeriod={validPeriod} />
           <Drawer
             position="right"
             opened={searchOpen}
@@ -79,10 +106,11 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
               All filters are applied in conjunction.
               Any persons without education units are not returned.
             </Alert>
-          <Box className="p-4">
+            <Text fz="sm">Source</Text>
+            <Box className="p-4">
               <SegmentedControl
                 value={source}
-                onChange={setSource}
+                onChange={(v) => setSource(v as PersonsProps["source"])}
                 data={[
                   { label: 'Only 3rd-party', value: '3rd-party' },
                   { label: 'Only MICPA', value: 'micpa' },
@@ -90,6 +118,7 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
                 ]}
               />
             </Box>
+            <Divider my="sm" />
             <MultiSelect
               styles={{
                 input: {
@@ -110,9 +139,20 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
                 return item;
               }}
             />
+            <Divider my="sm" />
+            <Text fz="sm">Credited Period</Text>
             <Group position="center">
-              {/*<MonthPicker type="range" value={period} onChange={setPeriod} />*/}
+              <MonthPicker
+                type="range"
+                value={period}
+                onChange={setPeriod}
+                minDate={new Date(2017, 1, 1)}
+              />
             </Group>
+            <Text fz="sm">Export all to Excel (with filter)</Text>
+            <ActionIcon onClick={() => setExportOn(true)} color="orange" size="xl" radius="xl" variant="filled">
+              <IconTableExport size="2.125rem" />
+            </ActionIcon>
           </Drawer>
         </Stack>
       </ApplicationContainer>

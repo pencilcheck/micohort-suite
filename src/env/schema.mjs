@@ -25,6 +25,7 @@ export const serverSchema = z.object({
   QSTASH_NEXT_SIGNING_KEY: z.string(),
   SCRAPER_USERNAME: z.string(),
   SCRAPER_PASSWORD: z.string(),
+  DENO_SCRAPE_URL: z.string(),
   //DISCORD_CLIENT_ID: z.string(),
   //DISCORD_CLIENT_SECRET: z.string(),
   SITE_PASSWORD: z.string(),
@@ -46,6 +47,7 @@ export const serverEnv = {
   QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
   SCRAPER_USERNAME: process.env.SCRAPER_USERNAME,
   SCRAPER_PASSWORD: process.env.SCRAPER_PASSWORD,
+  DENO_SCRAPE_URL: process.env.DENO_SCRAPE_URL,
   //DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
   //DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
   SITE_PASSWORD: process.env.SITE_PASSWORD,
@@ -60,6 +62,7 @@ export const clientSchema = z.object({
   // NEXT_PUBLIC_CLIENTVAR: z.string(),
   NEXT_PUBLIC_SITE_READ_COOKIE: z.string(),
   NEXT_PUBLIC_SITE_HAS_PERMISSION: z.string(),
+  NEXT_PUBLIC_DENO_SCRAPE_URL: z.string(),
 });
 
 /**
@@ -72,4 +75,5 @@ export const clientEnv = {
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   NEXT_PUBLIC_SITE_READ_COOKIE: 'src',
   NEXT_PUBLIC_SITE_HAS_PERMISSION: 'has-permission',
+  NEXT_PUBLIC_DENO_SCRAPE_URL: 'https://fresh-frog-45.deno.dev',
 };

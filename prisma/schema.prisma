@@ -100,6 +100,8 @@ model MicpaPerson {
     orders              MicpaOrder[] // used for spending, might not correspond 1-1 to credit earned
     subscribeOrderDetails  MicpaOrderDetail[]
     educationUnits      MicpaEducationUnit[] // used for credit earning
+
+    @@fulltext([name, email, company])
 }
 
 model MicpaOrder {

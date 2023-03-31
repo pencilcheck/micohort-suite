@@ -27,7 +27,7 @@ type ColumnType = MicpaPerson & { educationUnits: (MicpaEducationUnit & { produc
 
 type PersonsTableProps = PersonsProps;
 
-export default function PersonsTable({ keywords, source }: PersonsTableProps) {
+export default function PersonsTable({ keywords, source, creditDatePeriod }: PersonsTableProps) {
   const [sideNav, handlers] = useDisclosure(false);
   const [clicked, setClicked] = useState<MicpaPerson>();
   const { classes } = useStyles();
@@ -39,7 +39,7 @@ export default function PersonsTable({ keywords, source }: PersonsTableProps) {
   const [selectedRecords, setSelectedRecords] = useState<ColumnType[]>([]);
 
   // TODO load list
-  const lists = api.cpeProgram.fetchAll.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords: keywords, source: source });
+  const lists = api.cpeProgram.fetchAll.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod });
 
   const {
     breakpoints: { xs: xsBreakpoint },
@@ -67,45 +67,40 @@ export default function PersonsTable({ keywords, source }: PersonsTableProps) {
         columns={[
           {
             accessor: 'id',
-            width: 50,
             ellipsis: true,
             sortable: true,
           },
           {
             accessor: 'name',
-            width: 100,
             ellipsis: true,
             sortable: true,
             render: ({ name }) => name,
           },
           {
             accessor: 'email',
-            width: 100,
             ellipsis: true,
             sortable: true,
             render: ({ email }) => email,
           },
           {
             accessor: 'company',
-            width: 100,
+            width: 200,
             ellipsis: true,
             sortable: true,
             render: ({ company }) => company,
           },
           {
             accessor: 'address',
-            width: 100,
+            width: 200,
             ellipsis: true,
             sortable: true,
             render: ({ address }) => address,
           },
-          {
-            accessor: 'educationUnits._count',
-            width: 150,
-            sortable: true,
-            visibleMediaQuery: aboveXsMediaQuery,
-            render: ({ educationUnits }) => <Center>{educationUnits.length}</Center>,
-          },
+          //{
+            //accessor: '_count.educationUnits',
+            //sortable: true,
+            //render: ({ _count }) => <Center>{_count.educationUnits}</Center>,
+          //},
         ]}
         records={lists.data?.rows as ColumnType[] ?? []}
         page={page}

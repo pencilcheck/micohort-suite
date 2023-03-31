@@ -9,14 +9,16 @@ import type { PaginationProps } from '../types'
 export interface PersonsProps {
   keywords?: string[];
   source?: '3rd-party' | 'micpa' | 'both';
-  creditDatePeriod?: [string, string];
+  creditDatePeriod?: [Date, Date];
 }
 
 function createParams(
   { keywords, source = 'both', creditDatePeriod }: PersonsProps,
 ) {
   if (
-    (creditDatePeriod && (dayjs(creditDatePeriod[0]) || dayjs(creditDatePeriod[1])) && dayjs(creditDatePeriod[0]) > dayjs(creditDatePeriod[1]))
+    (creditDatePeriod && creditDatePeriod[0] && creditDatePeriod[1]
+      && (dayjs(creditDatePeriod[0]) || dayjs(creditDatePeriod[1]))
+      && dayjs(creditDatePeriod[0]) > dayjs(creditDatePeriod[1]))
   ) {
     throw new Error(`invalid period value: ${JSON.stringify(creditDatePeriod)}`)
   }
@@ -64,16 +66,19 @@ function createParams(
 export function personsOfEducationUnits(
   prisma: PrismaClient,
   props: PersonsProps,
-  { page, pageSize, orderBy }: PaginationProps
+  pagination?: PaginationProps
 ) {
   const params = createParams(props) as Prisma.MicpaPersonFindManyArgs;
+  const paginationProps = isEmpty(pagination) ? {} : {
+    take: pagination.pageSize,
+    skip: (pagination.page-1) * pagination.pageSize,
+  }
   // removed "include" here to speed up query, and have include be part of another query to construct final data to return in router instead of here
   return prisma.micpaPerson.findMany({
-    orderBy: orderBy || {
+    orderBy: pagination?.orderBy || {
       name: "desc",
     },
-    take: pageSize,
-    skip: (page-1) * pageSize,
+    ...paginationProps,
     ...params
   });
 }

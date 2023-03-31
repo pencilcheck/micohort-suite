@@ -2,19 +2,25 @@ import { Image, Navbar, Group, Code, ScrollArea, createStyles } from '@mantine/c
 import {
   IconNotes,
   IconBrandLinkedin,
+  IconUsers,
 } from '@tabler/icons';
 import { LinksGroup } from './NavbarLinksGroup/NavbarLinksGroup';
 
 const mockdata = [
   {
-    label: 'Mailing list',
+    label: 'Mailing list (WIP)',
     path: '/mailing_list',
     icon: IconNotes,
   },
   {
-    label: 'Linkedin search',
+    label: 'Linkedin search (WIP)',
     path: '/linkedin_search',
     icon: IconBrandLinkedin,
+  },
+  {
+    label: 'CPE Program',
+    path: '/cpe_program',
+    icon: IconUsers,
   },
 ];
 

@@ -8,7 +8,8 @@
     "postinstall": "prisma generate",
     "lint": "next lint",
     "start": "next start",
-    "test": "jest --watch"
+    "test": "jest --watch",
+    "deno": "cd deno; DENO_DEPLOY_TOKEN=ddp_52Z4d0RQYuc28qmxLJ123mFlAIAPXJ1XuhXk deployctl deploy --project=fresh-frog-45 --exclude=node_modules server.js"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
@@ -29,7 +30,7 @@
     "@mantine/notifications": "^6.0.0",
     "@mantine/nprogress": "^6.0.0",
     "@next-auth/prisma-adapter": "^1.0.5",
-    "@next/font": "^13.1.2",
+    "@next/font": "^13.2.4",
     "@prisma/client": "^4.11.0",
     "@react-spring/web": "^9.6.1",
     "@tabler/icons": "^1.119.0",
@@ -42,11 +43,14 @@
     "async": "^3.2.4",
     "chrome-aws-lambda": "10.1.0",
     "dayjs": "^1.11.7",
+    "file-saver": "^2.0.5",
     "iter-ops": "^3.0.7",
+    "jotai": "^2.0.3",
     "lodash": "^4.17.21",
     "mantine-datatable": "^1.7.34",
-    "next": "13.1.1",
+    "next": "^13.2.4",
     "next-auth": "^4.18.7",
+    "node-fetch": "^3.3.1",
     "prisma-redis-middleware": "4.6.1",
     "puppeteer": "~10.1.0",
     "puppeteer-core": "~10.1.0",
@@ -55,6 +59,7 @@
     "string-similarity": "^4.0.4",
     "superjson": "1.9.1",
     "universal-cookie": "^4.0.4",
+    "xlsx": "^0.18.5",
     "zod": "^3.20.2",
     "zod-prisma-types": "^1.6.8"
   },
@@ -65,6 +70,7 @@
     "@types/async": "^3.2.16",
     "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.18",
+    "@types/node-fetch": "^2.6.3",
     "@types/prettier": "^2.7.2",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.10",
