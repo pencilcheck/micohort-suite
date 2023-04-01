@@ -38,8 +38,10 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
   // TODO Reference mantine-datatable for selection actions (mass delete, export etc)
   const [selectedRecords, setSelectedRecords] = useState<ColumnType[]>([]);
 
-  // TODO load list
-  const lists = api.cpeProgram.fetchAll.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod });
+  // TODO load list too slow on vercel, can't exceed 10s
+  const total = api.cpeProgram.fetchAllCount.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod });
+  const ids = api.cpeProgram.fetchAllPersonIds.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod });
+  const persons = api.cpeProgram.fetchAllPersons.useQuery({ ids: ids.isSuccess ? (ids.data as { id: string }[])?.map((d: { id: string }) => d.id) : [] }, { enabled: ids.isSuccess });
 
   const {
     breakpoints: { xs: xsBreakpoint },
@@ -63,7 +65,7 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
         withColumnBorders
         striped
         verticalAlignment="top"
-        fetching={lists.isFetching}
+        fetching={persons.isFetching}
         columns={[
           {
             accessor: 'id',
@@ -102,10 +104,10 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
             //render: ({ _count }) => <Center>{_count.educationUnits}</Center>,
           //},
         ]}
-        records={lists.data?.rows as ColumnType[] ?? []}
+        records={persons.data as ColumnType[] ?? []}
         page={page}
         onPageChange={setPage}
-        totalRecords={lists.data?.total ?? 0}
+        totalRecords={total.data ?? 0}
         recordsPerPage={PAGE_SIZE}
         sortStatus={sortStatus}
         onSortStatusChange={handleSortStatusChange}

@@ -75,6 +75,9 @@ export function personsOfEducationUnits(
   }
   // removed "include" here to speed up query, and have include be part of another query to construct final data to return in router instead of here
   return prisma.micpaPerson.findMany({
+    select: {
+      id: true,
+    },
     orderBy: pagination?.orderBy || {
       name: "desc",
     },
