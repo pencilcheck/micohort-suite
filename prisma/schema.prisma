@@ -101,6 +101,7 @@ model MicpaPerson {
     subscribeOrderDetails  MicpaOrderDetail[]
     educationUnits      MicpaEducationUnit[] // used for credit earning
 
+    @@index([id])
     @@fulltext([name, email, company])
 }
 
@@ -156,7 +157,7 @@ model MicpaEducationUnit {
     creditEarned        Float?            @default(0)
     creditAt            DateTime?
 
-    @@index([productId, orderId, creditAt])
+    @@index([id, productId, orderId, personId, isThirdParty, creditAt])
     @@fulltext([externalSource])
 }
 
