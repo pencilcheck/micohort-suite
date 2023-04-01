@@ -53,17 +53,8 @@ export const cpeProgramRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const persons = await personsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod }) as { id: string }[];
-      const rows = await ctx.prisma.micpaPerson.findMany({
-        select: {
-        },
-        where: {
-          id: {
-            in: persons.map(r => r.id),
-          }
-        }
-      });
 
-      const safeRows = exclude<MicpaPerson, 'scrapedAt'>(rows as MicpaPerson[], ['scrapedAt'])
+      const safeRows = exclude<MicpaPerson, 'scrapedAt'>(persons as MicpaPerson[], ['scrapedAt'])
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const ws = XLSX.utils.json_to_sheet(safeRows, {});
@@ -85,21 +76,11 @@ export const cpeProgramRouter = createTRPCRouter({
         keywords: z.array(z.string()).optional(),
         source: z.enum(["3rd-party", "micpa", "both"]).optional(),
         creditDatePeriod: z.tuple([z.date(), z.date()]).optional(),
-        sortStatus: z.object({
-          columnAccessor: z.string(),
-          direction: z.string(),
-        }).nullish(),
-        size: z.number(),
-        page: z.number(),
       })
     )
     .query(async ({ input, ctx }) => {
-      // The whole API call takes 01:43.76 minutes, since we have 3 queries done in sequencial order, if I put into $transaction it will timeout on planetscale (exceeding timeout 20s limit)
-      // Added library to cache queries https://github.com/Asjas/prisma-redis-middleware so at least in session, it will be faster on second time around
-
-      const totalCount = await countOfPersonsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod });
-
-      return totalCount;
+      // takes 10+s
+      return await countOfPersonsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod });
     }),
 
   fetchAllPersonIds: publicProcedure
@@ -117,22 +98,18 @@ export const cpeProgramRouter = createTRPCRouter({
       })
     )
     .query(async ({ input, ctx }) => {
-      // The whole API call takes 01:43.76 minutes, since we have 3 queries done in sequencial order, if I put into $transaction it will timeout on planetscale (exceeding timeout 20s limit)
-      // Added library to cache queries https://github.com/Asjas/prisma-redis-middleware so at least in session, it will be faster on second time around
-
-      const persons = await personsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod }, { page: input.page, pageSize: input.size, orderBy: set({}, input?.sortStatus?.columnAccessor || 'name', input?.sortStatus?.direction || 'desc') })
-
-      return persons;
+      // 7s
+      return await personsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod }, { page: input.page, pageSize: input.size, orderBy: set({}, input?.sortStatus?.columnAccessor || 'name', input?.sortStatus?.direction || 'desc') })
     }),
 
-  fetchAllPersons: publicProcedure
+  fetchPersonEducationDetails: publicProcedure
     .input(
       z.object({
-        ids: z.array(z.string()),
+        id: z.string(),
       })
     )
     .query(async ({ input, ctx }) => {
-      const rows = await ctx.prisma.micpaPerson.findMany({
+      const person = await ctx.prisma.micpaPerson.findFirst({
         include: {
           _count: {
             select: {
@@ -143,7 +120,6 @@ export const cpeProgramRouter = createTRPCRouter({
             select: {
               isThirdParty: true,
               productId: true, // use this to group education category
-              product: true, // nseted includes product adds extra 200ms
               externalSource: true,
               educationCategory: true,
               creditEarned: true,
@@ -152,13 +128,12 @@ export const cpeProgramRouter = createTRPCRouter({
           },
         },
         where: {
-          id: {
-            in: input.ids,
-          }
+          id: input.id,
+
         }
       })
 
-      return rows;
+      return person;
     }),
 
   getSecretMessage: protectedProcedure.query(() => {

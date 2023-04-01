@@ -38,10 +38,9 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
   // TODO Reference mantine-datatable for selection actions (mass delete, export etc)
   const [selectedRecords, setSelectedRecords] = useState<ColumnType[]>([]);
 
-  // on vercel, each request can't exceed 10s
-  const total = api.cpeProgram.fetchAllCount.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod });
-  const ids = api.cpeProgram.fetchAllPersonIds.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod });
-  const persons = api.cpeProgram.fetchAllPersons.useQuery({ ids: ids.isSuccess ? (ids.data as { id: string }[])?.map((d: { id: string }) => d.id) : [] }, { enabled: ids.isSuccess });
+  // on render.com, longer timeout
+  const total = api.cpeProgram.fetchAllCount.useQuery({ keywords, source, creditDatePeriod });
+  const persons = api.cpeProgram.fetchAllPersonIds.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod });
 
   const {
     breakpoints: { xs: xsBreakpoint },
