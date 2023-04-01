@@ -103,8 +103,9 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
             closeOnClickOutside
           >
             <Alert icon={<IconAlertCircle size="1rem" />} title="Warning!" color="red">
-              All filters are applied in conjunction.
-              Any persons without education units are not returned.
+              All filters are applied in conjunction.<br />
+              Any persons without education units are not returned.<br />
+              <b>Big date range query will likely to timeout, if timeout, try smaller queries.</b>
             </Alert>
             <Text fz="sm">Source</Text>
             <Box className="p-4">
