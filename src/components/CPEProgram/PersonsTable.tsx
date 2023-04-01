@@ -11,6 +11,7 @@ import LinkedinPersonTable from "../LinkedinSearch/LinkedinPersonTable";
 
 import { api } from "../../utils/api";
 import { PersonsProps } from '../../etl/CreditEarning';
+import EducationUnitsTable from './EducationUnitsTable';
 
 const useStyles = createStyles((theme) => ({
   modal: { width: 300 },
@@ -112,8 +113,8 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
         onSortStatusChange={handleSortStatusChange}
         selectedRecords={selectedRecords}
         onSelectedRecordsChange={setSelectedRecords}
-        onRowClick={(list, rowIndex) => {
-          setClicked(list);
+        onRowClick={(record, rowIndex) => {
+          setClicked(record);
           handlers.open();
         }}
         //rowContextMenu={{
@@ -148,7 +149,7 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
     <Drawer
       opened={sideNav}
       onClose={() => handlers.close()}
-      title="Mailing list content"
+      title="Education units credited"
       padding="xl"
       size={800}
       overlayProps={{
@@ -157,7 +158,7 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
         blur: 3,
       }}
     >
-      {clicked && <LinkedinPersonTable filter={{ mailingLists: { some: { mailingListId: clicked?.id } } }} />}
+      {clicked && <EducationUnitsTable id={clicked.id} keywords={keywords} creditDatePeriod={creditDatePeriod} />}
     </Drawer>
   </>);
 }

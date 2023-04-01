@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 import { countOfPersonsOfEducationUnits, personsOfEducationUnits } from "../../../etl/CreditEarning";
 import { MicpaPerson } from "@prisma/client";
+import isEmpty from "lodash/isEmpty";
 
 function exclude<T, Key extends keyof T>(
   users: Array<T>,
@@ -106,34 +107,57 @@ export const cpeProgramRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
+        creditDatePeriod: z.tuple([z.date(), z.date()]).optional(),
       })
     )
     .query(async ({ input, ctx }) => {
-      const person = await ctx.prisma.micpaPerson.findFirst({
-        include: {
-          _count: {
-            select: {
-              educationUnits: true
+      const creditDateQuery = !isEmpty(input.creditDatePeriod) ? {
+        AND: [
+          {
+            creditAt: {
+              gte: input.creditDatePeriod?.[0],
             }
           },
-          educationUnits: { // nested includes for educationUnits adds extra 9s, but grabs everything I need including the details of each person's education units
-            select: {
-              isThirdParty: true,
-              productId: true, // use this to group education category
-              externalSource: true,
-              educationCategory: true,
-              creditEarned: true,
-              creditAt: true,
+          {
+            creditAt: {
+              lte: input.creditDatePeriod?.[1],
             }
+          }
+        ]
+      } : null;
+
+      const dateRangeQuery = creditDateQuery ?? {};
+
+      const result = await ctx.prisma.$transaction([
+        ctx.prisma.micpaEducationUnit.count({
+          where: {
+            personId: input.id,
+            ...dateRangeQuery,
+          }
+        }),
+        ctx.prisma.micpaEducationUnit.findMany({
+          select: {
+            id: true,
+            orderId: true,
+            personId: true,
+            isThirdParty: true,
+            productId: true, // use this to group education category
+            externalSource: true,
+            educationCategory: true,
+            creditEarned: true,
+            creditAt: true,
           },
-        },
-        where: {
-          id: input.id,
+          where: {
+            personId: input.id,
+            ...dateRangeQuery,
+          }
+        }),
+      ]);
 
-        }
-      })
-
-      return person;
+      return {
+        total: result[0],
+        rows: result[1],
+      };
     }),
 
   getSecretMessage: protectedProcedure.query(() => {
