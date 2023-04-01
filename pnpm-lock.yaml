@@ -51,7 +51,7 @@ specifiers:
   jest-environment-jsdom: ^29.5.0
   jotai: ^2.0.3
   lodash: ^4.17.21
-  mantine-datatable: ^1.7.34
+  mantine-datatable: ^2.2.10
   next: ^13.2.4
   next-auth: ^4.18.7
   node-fetch: ^3.3.1
@@ -105,7 +105,7 @@ dependencies:
   iter-ops: 3.0.7
   jotai: 2.0.3_react@18.2.0
   lodash: 4.17.21
-  mantine-datatable: 1.7.34_selai3kyoynienbtb5oivuyaku
+  mantine-datatable: 2.2.10_selai3kyoynienbtb5oivuyaku
   next: 13.2.4_biqbaboplfbrettd7655fr4n2y
   next-auth: 4.18.8_ld2jel3hspngo3u5lti2kgl2sq
   node-fetch: 3.3.1
@@ -7784,11 +7784,11 @@ packages:
       tmpl: 1.0.5
     dev: true
 
-  /mantine-datatable/1.7.34_selai3kyoynienbtb5oivuyaku:
-    resolution: {integrity: sha512-jvJFd75TChS8dY13Gv6XElcvH9wJu2XQeEdGZIWRWzNAhTX5Yu5YgZyrAI1yuJcE7oyzQr/vTHUCOuBdoO9tYg==}
+  /mantine-datatable/2.2.10_selai3kyoynienbtb5oivuyaku:
+    resolution: {integrity: sha512-VUhdnj8UjxyBDPxOcl1if4PBLwXj4rdE7ZN7CrYqJkuSyRB1owllE6k4PLGhipylxOnyo1VxFbIoBMrLKIbj6w==}
     peerDependencies:
-      '@mantine/core': ^5.10.0
-      '@mantine/hooks': ^5.10.0
+      '@mantine/core': ^6.0.5
+      '@mantine/hooks': ^6.0.5
       react: ^18.2.0
     dependencies:
       '@mantine/core': 6.0.5_sivdeeeu6oye6kvkr6etxvwvbe
