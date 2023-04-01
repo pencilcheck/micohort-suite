@@ -52,13 +52,13 @@ export const cpeProgramRouter = createTRPCRouter({
       })
     )
     .query(async ({ input, ctx }) => {
-      const persons = await personsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod });
+      const persons = await personsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod }) as { id: string }[];
       const rows = await ctx.prisma.micpaPerson.findMany({
         select: {
         },
         where: {
           id: {
-            in: persons.map((r: MicpaPerson) => r.id),
+            in: persons.map(r => r.id),
           }
         }
       });
