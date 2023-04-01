@@ -48,15 +48,15 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
   );
 
   useEffect(() => {
-    if (excelBlobQuery.isSuccess) {
+    if (excelBlobQuery.isSuccess && exportOn) {
       const blob = new Blob(
         [new Buffer(excelBlobQuery?.data?.buffer?.replace(/^[\w\d;:\/]+base64\,/g, '') || '', 'base64')],
         {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}
       );
-      saveAs(blob, 'test.xlsx');
+      saveAs(blob, `report-${value.length}keywords-${source || 'both'}-${validPeriod?.[0]?.toISOString() || 'no start date'}-${validPeriod?.[1]?.toISOString() || 'no end date'}.xlsx`);
       setExportOn(false);
     }
-  }, [excelBlobQuery, exportOn])
+  }, [excelBlobQuery, exportOn, source, validPeriod, value])
 
   useEffect(() => {
     if (period[0] && period[1]) {
