@@ -77,6 +77,10 @@ export function personsOfEducationUnits(
   return prisma.micpaPerson.findMany({
     select: {
       id: true,
+      name: true,
+      email: true,
+      company: true,
+      address: true,
     },
     orderBy: pagination?.orderBy || {
       name: "desc",
