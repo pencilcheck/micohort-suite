@@ -8,12 +8,12 @@ import { LinksGroup } from './NavbarLinksGroup/NavbarLinksGroup';
 
 const mockdata = [
   {
-    label: 'Mailing list (WIP)',
+    label: 'Mailing list',
     path: '/mailing_list',
     icon: IconNotes,
   },
   {
-    label: 'Linkedin search (WIP)',
+    label: 'Linkedin search',
     path: '/linkedin_search',
     icon: IconBrandLinkedin,
   },
