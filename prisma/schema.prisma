@@ -80,6 +80,8 @@ model MailingList {
     createdAt     DateTime  @default(now())
     updatedAt     DateTime  @updatedAt
     persons       MailingListsOnPersons[]
+
+    @@index([id, title, createdAt, updatedAt])
 }
 
 model KeywordFilterDropdown {
@@ -171,10 +173,12 @@ model MicpaLinkedinPerson {
 }
 
 model MailingListsOnPersons {
+    // deleting mailing list will delete related records
     mailingListId       String
-    mailingList         MailingList     @relation(fields: [mailingListId], references: [id])
+    mailingList         MailingList     @relation(fields: [mailingListId], references: [id], onDelete: Cascade)
+    // deleting person will delete related records
     personId            String
-    person              MicpaPerson     @relation(fields: [personId], references: [id])
+    person              MicpaPerson     @relation(fields: [personId], references: [id], onDelete: Cascade)
     assignedAt          DateTime        @default(now())
     assignedBy          String?         // once we have user login then we can use this field
 
