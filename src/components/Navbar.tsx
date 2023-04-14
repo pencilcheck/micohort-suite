@@ -63,7 +63,7 @@ export default function NavBar() {
   const links = mockdata.map((item) => <LinksGroup {...item} key={item.label} />);
 
   return (
-    <Navbar height={800} width={{ sm: 300 }} p="md" className={classes.navbar}>
+    <Navbar height={'100%'} width={{ sm: 300 }} p="md" className={classes.navbar}>
       <Navbar.Section className={classes.header}>
         <Group position="apart">
           <Image alt="MICPA" src="https://www.micpa.org/ResourcePackages/MICPA/assets/dist/images/MICPA.svg" />
