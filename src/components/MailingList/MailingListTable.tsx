@@ -1,10 +1,11 @@
 import { Drawer, Box, Button, createStyles, Center, Group, Stack, Text, useMantineTheme, ActionIcon } from '@mantine/core';
 import { useDisclosure } from "@mantine/hooks";
+import qs from 'query-string'
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { useState } from 'react';
-import { IconEdit, IconEye, IconTrash, IconTrashX } from '@tabler/icons';
+import { IconEdit, IconEye, IconFileDownload, IconTrash, IconTrashX } from '@tabler/icons';
 import { MicpaPerson, MicpaLinkedinPerson, MailingList, MailingListsOnPersons } from '@prisma/client';
 
 import LinkedinPersonTable from "../LinkedinSearch/LinkedinPersonTable";
@@ -110,6 +111,22 @@ export default function MailingListTable() {
                   handlers.open();
                 }}>
                   <IconEye size={16} />
+                </ActionIcon>
+                <ActionIcon color="yellow" onClick={() => {
+                  const query = {
+                    id: list.id,
+                    select: JSON.stringify({
+                      name: true,
+                      address: true,
+                    })
+                  }
+                  const queryString = qs.stringify(query, {
+                    arrayFormat: 'bracket'
+                  })
+                  const url = `${window.location.origin}/api/list/export?${queryString}`
+                  window.open(url);
+                }}>
+                  <IconFileDownload size={16} />
                 </ActionIcon>
                 <ActionIcon color="red" onClick={() => {
                   deleteMutate.mutate({ id: list.id }, {
