@@ -2,7 +2,7 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { saveAs } from "file-saver";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { IconAdjustments, IconAlertCircle, IconTableExport } from "@tabler/icons";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { createStyles, Text, Title, Stack, Button, Box, Drawer, useMantineTheme, MultiSelect, ActionIcon, Alert, SegmentedControl, Group, Divider } from "@mantine/core";
@@ -16,6 +16,7 @@ import Login from "./login";
 import { PersonsProps } from "../etl/CreditEarning";
 import { MonthPicker } from "@mantine/dates";
 import dayjs from "dayjs";
+import { KeywordFilterDropdown } from "@prisma/client";
 
 const useStyles = createStyles((theme) => ({
   title: {
@@ -40,12 +41,20 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
   const [value, setValue] = useState<string[]>([])
   const [source, setSource] = useState<PersonsProps["source"]>("both")
   const [searchOpen, setSearchOpen] = useState(true)
+  const [keywords, setKeywords] = useState<KeywordFilterDropdown[]>([])
   const keywordDropdown = api.cpeProgram.fetchDropdownAll.useQuery();
   const createDropdownMutation = api.cpeProgram.createDropdown.useMutation();
   const excelBlobQuery = api.cpeProgram.report.useQuery(
     { keywords: value, source: source, creditDatePeriod: validPeriod },
     { enabled: exportOn }
   );
+
+  // only execute function if dependency change, and then memorize the return value
+  useMemo(() => {
+    if (keywordDropdown.isSuccess) {
+      setKeywords(keywordDropdown.data);
+    }
+  }, [keywordDropdown.isSuccess, keywordDropdown.data])
 
   useEffect(() => {
     if (excelBlobQuery.isSuccess && exportOn) {
@@ -129,13 +138,14 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
               label="Keywords appear in any credited courses"
               value={value}
               onChange={setValue}
-              data={keywordDropdown.data ?? []}
+              data={keywords}
               placeholder="Select items"
               searchable
               creatable
               getCreateLabel={(query) => `+ Create ${query}`}
               onCreate={(query) => {
-                const item = { value: query, label: query };
+                const item = { id: query, value: query, label: query };
+                setKeywords(keywords => ([...keywords, item]))
                 createDropdownMutation.mutate({ value: query });
                 return item;
               }}

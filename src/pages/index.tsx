@@ -114,7 +114,7 @@ const Home: NextPage = () => {
                 className={classes.control}
                 mt={40}
               >
-                Mailing list
+                Mailing List
               </Button>
               <Button
                 onClick={() => void router.push('/linkedin_search')}
@@ -124,7 +124,7 @@ const Home: NextPage = () => {
                 className={classes.control}
                 mt={40}
               >
-                Linkedin search
+                Linkedin Search
               </Button>
               <Button
                 onClick={() => void router.push('/cpe_program')}
