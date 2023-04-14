@@ -18,11 +18,11 @@ export const personRouter = createTRPCRouter({
       })
     )
     .query(async ({ input, ctx }) => {
-      const result = await ctx.prisma.$transaction([
-        ctx.prisma.micpaPerson.count({
+      const result = [
+        await ctx.prisma.micpaPerson.count({
           where: input.filter,
         }),
-        ctx.prisma.micpaPerson.findMany({
+        await ctx.prisma.micpaPerson.findMany({
           include: {
             linkedinPersons: true,
           },
@@ -33,7 +33,7 @@ export const personRouter = createTRPCRouter({
           },
           where: input.filter,
         })
-      ]);
+      ];
 
       return {
         total: result[0],

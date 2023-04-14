@@ -1,10 +1,10 @@
-import { Box, Button, createStyles, Group, Stack, Text, useMantineTheme } from '@mantine/core';
+import { ActionIcon, Box, Button, createStyles, Group, Stack, Text, useMantineTheme } from '@mantine/core';
 import { closeAllModals, openModal } from '@mantine/modals';
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { useState } from 'react';
-import { IconEdit, IconTrash, IconTrashX } from '@tabler/icons';
+import { IconBrandLinkedin, IconEdit, IconEye, IconTrash, IconTrashX } from '@tabler/icons';
 import { Prisma, MicpaPerson, MicpaLinkedinPerson } from '@prisma/client';
 
 import { api } from "../../utils/api";
@@ -64,34 +64,29 @@ export default function LinkedinTable({ filter }: Props) {
         columns={[
           {
             accessor: 'id',
-            width: 50,
+            width: 100,
             ellipsis: true,
             sortable: true,
           },
           {
             accessor: 'name',
-            width: 100,
             ellipsis: true,
             sortable: true,
             render: ({ name }) => name,
           },
           {
             accessor: 'email',
-            width: 150,
             sortable: true,
             visibleMediaQuery: aboveXsMediaQuery,
           },
           {
             accessor: 'company',
-            title: 'Company',
-            width: 150,
+            ellipsis: true,
             sortable: true,
             visibleMediaQuery: aboveXsMediaQuery,
           },
           {
             accessor: 'address',
-            title: 'Address',
-            width: 200,
             sortable: true,
             visibleMediaQuery: aboveXsMediaQuery,
           },
@@ -110,6 +105,21 @@ export default function LinkedinTable({ filter }: Props) {
                   /*}*/
                 /*: undefined,*/
           /*},*/
+          {
+            accessor: 'actions',
+            width: 100,
+            title: <Text mr="xs">Row actions</Text>,
+            textAlignment: 'right',
+            render: (person) => (
+              <Group spacing={4} position="right" noWrap>
+                <ActionIcon color="green" onClick={() => {
+                  router.push(`/linkedin_search?presearch=${encodeURIComponent(name)}`).catch((e) => console.log(e));
+                }}>
+                  <IconBrandLinkedin size={16} />
+                </ActionIcon>
+              </Group>
+            ),
+          },
         ]}
         records={persons.data ? persons.data.rows : []}
         page={page}
@@ -123,9 +133,6 @@ export default function LinkedinTable({ filter }: Props) {
         onRowClick={({ name, email, company, address }) => {
           // TODO open a universal modal that shows graphs and information about this person
           // components/Person/AnalyticsModal.tsx
-
-          // For now let's just redirect to linkedin search
-          router.push(`/linkedin_search?presearch=${encodeURIComponent(name)}`).catch((e) => console.log(e));
         }}
         rowContextMenu={{
           items: ({ id, name, email, company, address }) => [

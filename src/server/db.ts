@@ -9,6 +9,8 @@ declare global {
 }
 
 const cacheMiddleware: Prisma.Middleware = createPrismaRedisCache({
+  excludeModels: ["MailingList"],
+  excludeMethods: ["count", "groupBy"],
   cacheTime: 300,
   onHit: (key) => {
     console.log("hit", key);

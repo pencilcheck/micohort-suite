@@ -1,10 +1,10 @@
-import { Drawer, Box, Button, createStyles, Center, Group, Stack, Text, useMantineTheme } from '@mantine/core';
+import { Drawer, Box, Button, createStyles, Center, Group, Stack, Text, useMantineTheme, ActionIcon } from '@mantine/core';
 import { useDisclosure } from "@mantine/hooks";
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { useState } from 'react';
-import { IconEdit, IconTrash, IconTrashX } from '@tabler/icons';
+import { IconEdit, IconEye, IconTrash, IconTrashX } from '@tabler/icons';
 import { MicpaPerson, MicpaLinkedinPerson, MailingList, MailingListsOnPersons } from '@prisma/client';
 
 import LinkedinPersonTable from "../LinkedinSearch/LinkedinPersonTable";
@@ -22,15 +22,18 @@ const useStyles = createStyles((theme) => ({
 
 const PAGE_SIZE = 20;
 
-type ColumnType = MailingList & { persons: MailingListsOnPersons[] };
+type ColumnType = MailingList & { _count: { persons: number } };
 
 export default function MailingListTable() {
   const [sideNav, handlers] = useDisclosure(false);
   const [clicked, setClicked] = useState<MailingList>();
   const { classes } = useStyles();
   const [page, setPage] = useState(1);
-  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({ columnAccessor: 'title', direction: 'asc' });
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({ columnAccessor: 'createdAt', direction: 'desc' });
   const theme = useMantineTheme();
+
+
+  const deleteMutate = api.list.deleteList.useMutation();
 
   // TODO Reference mantine-datatable for selection actions (mass delete, export etc)
   const [selectedRecords, setSelectedRecords] = useState<ColumnType[]>([]);
@@ -60,27 +63,65 @@ export default function MailingListTable() {
         withColumnBorders
         striped
         verticalAlignment="top"
-        fetching={lists.isFetching}
+        fetching={lists.isFetching || deleteMutate.isLoading}
         columns={[
           {
             accessor: 'id',
-            width: 50,
+            width: 100,
             ellipsis: true,
             sortable: true,
           },
           {
             accessor: 'title',
-            width: 350,
+            width: '100%',
             ellipsis: true,
             sortable: true,
             render: ({ title }) => title,
           },
           {
-            accessor: 'persons',
-            width: 50,
+            accessor: 'createdAt',
+            width: '100%',
+            ellipsis: true,
             sortable: true,
-            visibleMediaQuery: aboveXsMediaQuery,
-            render: ({ persons }) => <Center>{persons.length}</Center>,
+            render: ({ createdAt }) => createdAt.toDateString(),
+          },
+          {
+            accessor: 'updatedAt',
+            width: '100%',
+            ellipsis: true,
+            sortable: true,
+            render: ({ updatedAt }) => updatedAt.toDateString(),
+          },
+          // a littie trick, as prisma can't order by _count.persons but can do it with persons._count
+          {
+            accessor: 'persons._count',
+            width: '100%',
+            sortable: true,
+            render: ({ _count }) => _count.persons,
+          },
+          {
+            accessor: 'actions',
+            title: <Text mr="xs">Row actions</Text>,
+            textAlignment: 'right',
+            render: (list) => (
+              <Group spacing={4} position="right" noWrap>
+                <ActionIcon color="green" onClick={() => {
+                  setClicked(list);
+                  handlers.open();
+                }}>
+                  <IconEye size={16} />
+                </ActionIcon>
+                <ActionIcon color="red" onClick={() => {
+                  deleteMutate.mutate({ id: list.id }, {
+                    onSuccess: () => {
+                      lists.refetch().catch(console.log)
+                    }
+                  })
+                }}>
+                  <IconTrash size={16} />
+                </ActionIcon>
+              </Group>
+            ),
           },
         ]}
         records={lists.data?.rows ?? []}
@@ -92,37 +133,6 @@ export default function MailingListTable() {
         onSortStatusChange={handleSortStatusChange}
         selectedRecords={selectedRecords}
         onSelectedRecordsChange={setSelectedRecords}
-        onRowClick={(list, rowIndex) => {
-          setClicked(list);
-          handlers.open();
-        }}
-        rowContextMenu={{
-          items: ({ id, title }) => [
-            {
-              key: 'edit',
-              icon: <IconEdit size={14} />,
-              title: `Edit ${title}`,
-              onClick: () => showNotification({ color: 'orange', message: `Should edit ${title}` }),
-            },
-            {
-              key: 'delete',
-              title: `Delete ${title}`,
-              icon: <IconTrashX size={14} />,
-              color: 'red',
-              onClick: () => showNotification({ color: 'red', message: `Should delete ${title}` }),
-            },
-            { key: 'divider-1', divider: true },
-            {
-              key: 'deleteMany',
-              hidden: selectedRecords.length <= 1 || !selectedRecords.map((r) => r.id).includes(id),
-              title: `Delete ${selectedRecords.length} selected records`,
-              icon: <IconTrash size={14} />,
-              color: 'red',
-              onClick: () =>
-                showNotification({ color: 'red', message: `Should delete ${selectedRecords.length} records` }),
-            },
-          ],
-        }}
       />
     </Box>
     <Drawer
