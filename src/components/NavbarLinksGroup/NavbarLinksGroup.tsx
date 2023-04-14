@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Group, Box, Collapse, ThemeIcon, Text, UnstyledButton, createStyles } from '@mantine/core';
 import { TablerIcon, IconChevronLeft, IconChevronRight } from '@tabler/icons';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 const useStyles = createStyles((theme) => ({
   control: {
@@ -62,16 +62,19 @@ export function LinksGroup({ icon: Icon, label, initiallyOpened, path, links }: 
       className={classes.link}
       href={link.link}
       key={link.label}
+      onClick={(event) => event.preventDefault()}
     >
       {link.label}
     </Text>
   ));
   
-  const onClick = () => {
+  const onClick = (e: React.MouseEvent) => {
+    e && e.preventDefault()
     if (hasLinks) {
       setOpened((o) => !o)
     } else {
-      path && router.push(path)
+      // useRouter doesn't work on second time
+      window.location.href = path || '/'
     }
   }
 
