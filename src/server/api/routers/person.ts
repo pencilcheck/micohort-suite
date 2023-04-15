@@ -18,26 +18,25 @@ export const personRouter = createTRPCRouter({
       })
     )
     .query(async ({ input, ctx }) => {
-      const result = [
-        await ctx.prisma.micpaPerson.count({
-          where: input.filter,
-        }),
-        await ctx.prisma.micpaPerson.findMany({
-          include: {
-            linkedinPersons: true,
-          },
-          skip: input.size * (input.page-1),
-          take: input.size,
-          orderBy: {
-            [input.sortStatus?.columnAccessor || 'name']: input.sortStatus?.direction || 'asc',
-          },
-          where: input.filter,
-        })
-      ];
+      const total = await ctx.prisma.micpaPerson.count({
+        where: input.filter,
+      });
+
+      const rows = await ctx.prisma.micpaPerson.findMany({
+        include: {
+          linkedinPersons: true,
+        },
+        skip: input.size * (input.page-1),
+        take: input.size,
+        orderBy: {
+          [input.sortStatus?.columnAccessor || 'name']: input.sortStatus?.direction || 'asc',
+        },
+        where: input.filter,
+      });
 
       return {
-        total: result[0],
-        rows: result[1],
+        total: total,
+        rows: rows,
       };
     }),
 

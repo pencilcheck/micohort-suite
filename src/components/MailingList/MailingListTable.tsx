@@ -35,6 +35,7 @@ export default function MailingListTable() {
 
 
   const deleteMutate = api.list.deleteList.useMutation();
+  const deletePersonFromListMutate = api.list.deletePersonFromList.useMutation();
 
   // TODO Reference mantine-datatable for selection actions (mass delete, export etc)
   const [selectedRecords, setSelectedRecords] = useState<ColumnType[]>([]);
@@ -46,6 +47,19 @@ export default function MailingListTable() {
     breakpoints: { xs: xsBreakpoint },
   } = useMantineTheme();
   const aboveXsMediaQuery = `(min-width: ${xsBreakpoint}px)`;
+
+  const handleOnPersonDelete = (personId: string, onSuccess: () => void) => {
+    if (clicked?.id && personId) {
+      deletePersonFromListMutate.mutate({
+        personId: personId,
+        listId: clicked?.id
+      }, {
+        onSuccess: () => {
+          onSuccess?.();
+        }
+      })
+    }
+  }
 
   const handleSortStatusChange = (status: DataTableSortStatus) => {
     setPage(1);
@@ -164,7 +178,7 @@ export default function MailingListTable() {
         blur: 3
       }}
     >
-      {clicked && <LinkedinPersonTable filter={{ mailingLists: { some: { mailingListId: clicked?.id } } }} />}
+      {clicked && <LinkedinPersonTable onDelete={handleOnPersonDelete} filter={{ mailingLists: { some: { mailingListId: clicked?.id } } }} />}
     </Drawer>
   </>);
 }

@@ -5,6 +5,7 @@ import uniq from "lodash/uniq";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
+import { MailingList } from "@prisma/client";
 
 export const listRouter = createTRPCRouter({
   fetchAll: publicProcedure
@@ -47,6 +48,57 @@ export const listRouter = createTRPCRouter({
         total: total,
         rows: rows,
       };
+    }),
+
+  addPersonsToList: publicProcedure
+    .input(
+      z.object({
+        ids: z.array(z.string()),
+        listId: z.string().optional(),
+        isNew: z.boolean().optional(),
+        newTitle: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      let list: MailingList | undefined;
+      if (input.isNew) {
+        list = await ctx.prisma.mailingList.create({
+          data: {
+            title: input.newTitle || `A mailing list ${new Date().toDateString()}`
+          },
+        });
+      }
+
+      // new list takes priority
+      if (list?.id || input.listId) {
+        const result = await ctx.prisma.mailingListsOnPersons.createMany({
+          data: input.ids.map((id) => ({
+            mailingListId: (list?.id || input.listId) as string,
+            personId: id,
+          })),
+        });
+        return result;
+      }
+
+      return null;
+    }),
+
+  deletePersonFromList: publicProcedure
+    .input(
+      z.object({
+        personId: z.string(),
+        listId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const result = await ctx.prisma.mailingListsOnPersons.deleteMany({
+        where: {
+          mailingListId: input.listId,
+          personId: input.personId,
+        },
+      });
+
+      return result;
     }),
 
   deleteList: publicProcedure

@@ -3,7 +3,7 @@ import { closeAllModals, openModal } from '@mantine/modals';
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { IconBrandLinkedin, IconEdit, IconEye, IconTrash, IconTrashX } from '@tabler/icons';
 import { Prisma, MicpaPerson, MicpaLinkedinPerson } from '@prisma/client';
 
@@ -23,21 +23,32 @@ const PAGE_SIZE = 20;
 
 interface Props {
   filter: Prisma.MicpaPersonWhereInput;
+  onDelete: (personId: string, onSuccess: () => void) => void
 }
 
-export default function LinkedinTable({ filter }: Props) {
+type ColumnType = MicpaPerson & { linkedinPersons: MicpaLinkedinPerson[]; }
+
+export default function LinkedinPersonTable({ filter, onDelete }: Props) {
+  const utils = api.useContext();
   const router = useRouter();
   const { classes } = useStyles();
   const [page, setPage] = useState(1);
+  const [records, setRecords] = useState<ColumnType[]>([]);
+  const [total, setTotal] = useState<number>(0);
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({ columnAccessor: 'name', direction: 'asc' });
 
-  const [selectedRecords, setSelectedRecords] = useState<(MicpaPerson & {
-    linkedinPersons: MicpaLinkedinPerson[];
-  })[]>([]);
+  const [selectedRecords, setSelectedRecords] = useState<ColumnType[]>([]);
 
   // TODO load list of mailing list as well
   // TODO useEffect for selected mailing list for content display
   const persons = api.person.fetchAll.useQuery({ filter, sortStatus: sortStatus, size: PAGE_SIZE, page });
+
+  useMemo(() => {
+    if (persons.isSuccess) {
+      setRecords(persons.data.rows)
+      setTotal(persons.data.total)
+    }
+  }, [persons.isSuccess, persons.data?.rows])
 
   const {
     breakpoints: { xs: xsBreakpoint },
@@ -49,12 +60,14 @@ export default function LinkedinTable({ filter }: Props) {
     setSortStatus(status);
   };
 
+  const PersonTable = DataTable<ColumnType>;
+
   const now = dayjs();
 
   return (
     // place the data table in a height-restricted container to make it vertically-scrollable
     <Box sx={{ height: 500 }}>
-      <DataTable
+      <PersonTable
         withBorder
         borderRadius="sm"
         withColumnBorders
@@ -113,18 +126,23 @@ export default function LinkedinTable({ filter }: Props) {
             render: (person) => (
               <Group spacing={4} position="right" noWrap>
                 <ActionIcon color="green" onClick={() => {
-                  router.push(`/linkedin_search?presearch=${encodeURIComponent(name)}`).catch((e) => console.log(e));
+                  router.push(`/linkedin_search?presearch=${encodeURIComponent(person.name)}`).catch((e) => console.log(e));
                 }}>
                   <IconBrandLinkedin size={16} />
                 </ActionIcon>
+                {onDelete && <ActionIcon color="red" onClick={() => {
+                  onDelete(person.id, () => { utils.person.invalidate().catch(console.log) })
+                }}>
+                  <IconTrash size={16} />
+                </ActionIcon>}
               </Group>
             ),
           },
         ]}
-        records={persons.data ? persons.data.rows : []}
+        records={records}
         page={page}
         onPageChange={setPage}
-        totalRecords={persons.data ? persons.data.total : 0}
+        totalRecords={total}
         recordsPerPage={PAGE_SIZE}
         sortStatus={sortStatus}
         onSortStatusChange={handleSortStatusChange}
@@ -133,72 +151,6 @@ export default function LinkedinTable({ filter }: Props) {
         onRowClick={({ name, email, company, address }) => {
           // TODO open a universal modal that shows graphs and information about this person
           // components/Person/AnalyticsModal.tsx
-        }}
-        rowContextMenu={{
-          items: ({ id, name, email, company, address }) => [
-            {
-              key: 'info',
-              icon: <IconEdit size={14} />,
-              title: `Show info ${name}`,
-              onClick: () => 
-                openModal({
-                  title: name,
-                  classNames: { content: classes.modal, title: classes.modalTitle },
-                  children: (
-                    <Stack>
-                      <Group>
-                        <Text className={classes.modalLabel} size="sm">
-                          Name
-                        </Text>
-                        <Text size="sm">{name}</Text>
-                      </Group>
-                      <Group>
-                        <Text className={classes.modalLabel} size="sm">
-                          Email
-                        </Text>
-                        <Text size="sm">{email}</Text>
-                      </Group>
-                      <Group>
-                        <Text className={classes.modalLabel} size="sm">
-                          Company
-                        </Text>
-                        <Text size="sm">{company}</Text>
-                      </Group>
-                      <Group>
-                        <Text className={classes.modalLabel} size="sm">
-                          Address
-                        </Text>
-                        <Text size="sm">{address}</Text>
-                      </Group>
-                      <Button onClick={() => closeAllModals()}>Close</Button>
-                    </Stack>
-                  ),
-                })
-            },
-            {
-              key: 'edit',
-              icon: <IconEdit size={14} />,
-              title: `Edit ${name}`,
-              onClick: () => showNotification({ color: 'orange', message: `Should edit ${name}` }),
-            },
-            {
-              key: 'delete',
-              title: `Delete ${name}`,
-              icon: <IconTrashX size={14} />,
-              color: 'red',
-              onClick: () => showNotification({ color: 'red', message: `Should delete ${name}` }),
-            },
-            { key: 'divider-1', divider: true },
-            {
-              key: 'deleteMany',
-              hidden: selectedRecords.length <= 1 || !selectedRecords.map((r) => r.id).includes(id),
-              title: `Delete ${selectedRecords.length} selected records`,
-              icon: <IconTrash size={14} />,
-              color: 'red',
-              onClick: () =>
-                showNotification({ color: 'red', message: `Should delete ${selectedRecords.length} records` }),
-            },
-          ],
         }}
       />
     </Box>

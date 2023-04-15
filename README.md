@@ -1,3 +1,12 @@
+# Why the data didn't update?
+
+There are 3 cashing layer
+1. React caching layer in memory (e.g. useMemo, useState, etc)
+2. prisma-redis-middleware server side query caching
+3. trpc query caching, that can be invalidated using useContext() then call utils.[router].invalidate()
+
+Check those three to make sure there is no unnecessary caching esp if there are mutations involved
+
 # Create T3 App
 
 This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
