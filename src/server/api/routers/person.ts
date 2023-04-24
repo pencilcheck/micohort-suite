@@ -89,7 +89,7 @@ export const personRouter = createTRPCRouter({
         orderBy: set({}, input.sortStatus?.columnAccessor || 'micpaPerson.name', input.sortStatus?.direction),
       })
 
-      const result = await ctx.prisma.$transaction([
+      const result = await Promise.all([
         ctx.prisma.micpaLinkedinPerson.count({
           where: {
             ...(input.micpaPersonId ? {
