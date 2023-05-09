@@ -4,7 +4,7 @@
 generator client {
     provider      = "prisma-client-js"
     binaryTargets = ["native", "rhel-openssl-1.0.x"]
-    previewFeatures = ["fullTextSearch", "fullTextIndex"]
+    previewFeatures = ["fullTextSearch", "fullTextIndex", "clientExtensions"]
 }
 
 generator zod {
@@ -88,6 +88,15 @@ model KeywordFilterDropdown {
     id            String    @id @default(cuid())
     label         String
     value         String
+}
+
+model PersonLicense {
+    id                  String          @id @default(cuid())
+    laraStatus          String
+    licenseDate         String
+
+
+    @@index([id, laraStatus, licenseDate])
 }
 
 model MicpaPerson {

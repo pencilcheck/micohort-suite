@@ -190,6 +190,33 @@ async function importOrderDetails() {
   }
 }
 
+async function importPersonCPALicenses() {
+  // PersonCPALicenses
+  const columns = flatten(
+    await streamAsPromise(readStreamForColumn("../data/vwPersonCPALicenses.csv")).catch(() => [])
+  );
+  const rows = await streamAsPromise(readStreamForData("../data/vwPersonCPALicenses.csv")).catch(() => []);
+
+  // ref: https://github.com/prisma/prisma/issues/9196
+  const i = pipe(rows, page(10000));
+  for (const chunks of i) {
+    const filterChunks = (rows: string[][]) => {
+      return rows.filter(r => {
+        return true
+      })
+    }
+    const personLicenses = await prisma.personLicense.createMany({
+      data: filterChunks(chunks).map(row => ({
+        id: row[indexOf<string>(columns, 'ID')] as string,
+        laraStatus: row[indexOf<string>(columns, 'MICPA_LARAStatus')]?.trim() || 'Active',
+        licenseDate: row[indexOf<string>(columns, 'LicenseDate')]?.trim() || '',
+      })),
+      skipDuplicates: true,
+    })
+    console.log(`${personLicenses.count} personLicenses imported`)
+  }
+}
+
 async function importEducationUnits() {
   // EducationUnits
   const columns = flatten(
@@ -315,8 +342,9 @@ async function main() {
   //await importOrderDetails();
   //await importEducationUnits();
   //await importMailingList();
+  await importPersonCPALicenses();
   //await fillInEmptyMicpaEducationUnitExternalSource();
-  await seedKeywordFilterDropdown();
+  //await seedKeywordFilterDropdown();
 }
 main()
   .then(async () => {
