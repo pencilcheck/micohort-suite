@@ -1,13 +1,11 @@
 import set from "lodash/set";
-import pick from "lodash/pick";
-import keys from "lodash/keys";
 import { z } from "zod";
 import * as XLSX from "xlsx";
 
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { countOfPersonsOfEducationUnits, personsOfEducationUnits } from "../../../etl/CPEProgram";
-import { MicpaPerson } from "@prisma/client";
+import type { MicpaPerson } from "@prisma/client";
 import isEmpty from "lodash/isEmpty";
+import isAfter from "date-fns/isAfter";
 
 function exclude<T, Key extends keyof T>(
   users: Array<T>,
@@ -19,6 +17,77 @@ function exclude<T, Key extends keyof T>(
     }
   }
   return users
+}
+
+const paginationSchema =
+  z.object({
+    sortStatus: z.object({
+      columnAccessor: z.string(),
+      direction: z.string(),
+    }).nullish(),
+    size: z.number(),
+    page: z.number(),
+  })
+
+const paramSchema = 
+  z.object({
+    keywords: z.array(z.string()).optional(),
+    source: z.enum(["3rd-party", "micpa", "both"]).optional(),
+    creditDatePeriod: z.tuple([z.date(), z.date()]),
+  })
+
+const paramWithPaginationSchema = paramSchema
+  .merge(paginationSchema)
+
+export type Params = z.infer<typeof paramSchema>;
+
+function createParams({
+  keywords,
+  source = 'both',
+  creditDatePeriod
+}: Params) {
+  if (isAfter(creditDatePeriod[0], creditDatePeriod[1])) {
+    throw new Error(`invalid period value: ${JSON.stringify(creditDatePeriod)}`)
+  }
+
+  const sourceToggle = source === '3rd-party' ? { isThirdParty: true } : source === 'micpa' ? { isThirdParty: false } : {}
+
+  // prisma mysql fulltext: https://www.prisma.io/docs/concepts/components/prisma-client/full-text-search#mysql
+  const keywordQuery = !isEmpty(keywords) ? {
+    externalSource: {
+      search: keywords?.map(k => `"${k}"`).join(' ')
+    }
+  } : {};
+
+  const creditDateQuery = !isEmpty(creditDatePeriod) ? {
+    AND: [
+      {
+        creditAt: {
+          gte: creditDatePeriod?.[0],
+        }
+      },
+      {
+        creditAt: {
+          lte: creditDatePeriod?.[1],
+        }
+      }
+    ]
+  } : null;
+
+  const dateRangeQuery = creditDateQuery ?? {};
+
+  // if just persons, only 3s
+  return !isEmpty({ ...dateRangeQuery, ...keywordQuery, ...sourceToggle })
+    ? {
+      educationUnits: {
+        some: {
+          ...dateRangeQuery,
+          ...keywordQuery,
+          ...sourceToggle,
+        }
+      }
+    }
+    : {};
 }
 
 export const cpeProgramRouter = createTRPCRouter({
@@ -45,17 +114,14 @@ export const cpeProgramRouter = createTRPCRouter({
     }),
 
   report: publicProcedure
-    .input(
-      z.object({
-        keywords: z.array(z.string()).optional(),
-        source: z.enum(["3rd-party", "micpa", "both"]).optional(),
-        creditDatePeriod: z.tuple([z.date(), z.date()]).optional(),
-      })
-    )
+    .input(paramSchema)
     .query(async ({ input, ctx }) => {
-      const persons = await personsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod }) as { id: string }[];
+      const where = createParams(input);
+      const persons = await ctx.prisma.micpaPerson.findMany({
+        where,
+      });
 
-      const safeRows = exclude<MicpaPerson, 'scrapedAt'>(persons as MicpaPerson[], ['scrapedAt'])
+      const safeRows = exclude<MicpaPerson, 'scrapedAt'>(persons, ['scrapedAt'])
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const ws = XLSX.utils.json_to_sheet(safeRows, {});
@@ -76,31 +142,35 @@ export const cpeProgramRouter = createTRPCRouter({
       z.object({
         keywords: z.array(z.string()).optional(),
         source: z.enum(["3rd-party", "micpa", "both"]).optional(),
-        creditDatePeriod: z.tuple([z.date(), z.date()]).optional(),
+        creditDatePeriod: z.tuple([z.date(), z.date()]),
       })
     )
     .query(async ({ input, ctx }) => {
       // takes 10+s
-      return await countOfPersonsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod });
+      const where = createParams(input);
+      return await ctx.prisma.micpaPerson.count({
+        where,
+      });
     }),
 
   fetchAllPersonIds: publicProcedure
-    .input(
-      z.object({
-        keywords: z.array(z.string()).optional(),
-        source: z.enum(["3rd-party", "micpa", "both"]).optional(),
-        creditDatePeriod: z.tuple([z.date(), z.date()]).optional(),
-        sortStatus: z.object({
-          columnAccessor: z.string(),
-          direction: z.string(),
-        }).nullish(),
-        size: z.number(),
-        page: z.number(),
-      })
-    )
+    .input(paramWithPaginationSchema)
     .query(async ({ input, ctx }) => {
       // 7s
-      return await personsOfEducationUnits(ctx.prisma, { keywords: input.keywords, source: input.source, creditDatePeriod: input.creditDatePeriod }, { page: input.page, pageSize: input.size, orderBy: set({}, input?.sortStatus?.columnAccessor || 'name', input?.sortStatus?.direction || 'desc') })
+      const where = createParams(input);
+      return await ctx.prisma.micpaPerson.findMany({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          company: true,
+          address: true,
+        },
+        where,
+        orderBy: set({}, input?.sortStatus?.columnAccessor || 'name', input?.sortStatus?.direction || 'desc'),
+        take: input.size,
+        skip: (input.page-1) * input.size,
+      });
     }),
 
   fetchPersonEducationDetails: publicProcedure

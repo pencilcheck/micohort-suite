@@ -3,14 +3,13 @@ import { useDisclosure } from "@mantine/hooks";
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconEdit, IconTrash, IconTrashX } from '@tabler/icons';
-import { MicpaPerson, MicpaLinkedinPerson, MailingList, MailingListsOnPersons, MicpaEducationUnit, MicpaProduct } from '@prisma/client';
 
 import LinkedinPersonTable from "../LinkedinSearch/LinkedinPersonTable";
 
-import { api } from "../../utils/api";
-import { PersonsProps } from '../../etl/CPEProgram';
+import { api, RouterOutputs } from "../../utils/api";
+import type { Params } from '../../server/api/routers/cpeprogram';
 import EducationUnitsTable from './EducationUnitsTable';
 
 const useStyles = createStyles((theme) => ({
@@ -24,24 +23,38 @@ const useStyles = createStyles((theme) => ({
 
 const PAGE_SIZE = 20;
 
-type ColumnType = MicpaPerson & { educationUnits: (MicpaEducationUnit & { product: MicpaProduct })[], _count: { educationUnits: number } };
+type ColumnType = RouterOutputs['cpeProgram']['fetchAllPersonIds'][0];
 
-type PersonsTableProps = PersonsProps;
+type PersonsTableProps = Params;
 
 export default function PersonsTable({ keywords, source, creditDatePeriod }: PersonsTableProps) {
   const [sideNav, handlers] = useDisclosure(false);
-  const [clicked, setClicked] = useState<MicpaPerson>();
+  const [clicked, setClicked] = useState<ColumnType>();
   const { classes } = useStyles();
   const [page, setPage] = useState(1);
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({ columnAccessor: 'name', direction: 'asc' });
+  const [data, setData] = useState<ColumnType[]>([]);
+  const [total, setTotal] = useState(0);
   const theme = useMantineTheme();
 
   // TODO Reference mantine-datatable for selection actions (mass delete, export etc)
   const [selectedRecords, setSelectedRecords] = useState<ColumnType[]>([]);
 
   // on render.com, longer timeout
-  const total = api.cpeProgram.fetchAllCount.useQuery({ keywords, source, creditDatePeriod });
+  const totalQuery = api.cpeProgram.fetchAllCount.useQuery({ keywords, source, creditDatePeriod });
   const persons = api.cpeProgram.fetchAllPersonIds.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod });
+
+  useEffect(() => {
+    if (persons.isSuccess && !!persons.data) {
+      setData(persons.data);
+    }
+  }, [persons.isSuccess])
+
+  useEffect(() => {
+    if (totalQuery.isSuccess) {
+      setTotal(totalQuery.data ?? 0);
+    }
+  }, [totalQuery.isSuccess])
 
   const {
     breakpoints: { xs: xsBreakpoint },
@@ -52,8 +65,6 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
     setPage(1);
     setSortStatus(status);
   };
-
-  const now = dayjs();
 
   const PersonsTable = DataTable<ColumnType>;
 
@@ -76,27 +87,23 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
             accessor: 'name',
             ellipsis: true,
             sortable: true,
-            render: ({ name }) => name,
           },
           {
             accessor: 'email',
             ellipsis: true,
             sortable: true,
-            render: ({ email }) => email,
           },
           {
             accessor: 'company',
             width: 200,
             ellipsis: true,
             sortable: true,
-            render: ({ company }) => company,
           },
           {
             accessor: 'address',
             width: 200,
             ellipsis: true,
             sortable: true,
-            render: ({ address }) => address,
           },
           //{
             //accessor: '_count.educationUnits',
@@ -104,10 +111,10 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
             //render: ({ _count }) => <Center>{_count.educationUnits}</Center>,
           //},
         ]}
-        records={persons.data as ColumnType[] ?? []}
+        records={data}
         page={page}
         onPageChange={setPage}
-        totalRecords={total.data ?? 0}
+        totalRecords={total}
         recordsPerPage={PAGE_SIZE}
         sortStatus={sortStatus}
         onSortStatusChange={handleSortStatusChange}

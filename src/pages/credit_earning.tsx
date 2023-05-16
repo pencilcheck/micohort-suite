@@ -12,8 +12,6 @@ import { AppPageProps } from "./_app";
 import { useRouter } from "next/router";
 import Login from "./login";
 import { MonthPicker } from "@mantine/dates";
-import dayjs from "dayjs";
-import AddToMailingListInput from "../components/MailingList/AddToMailingListInput";
 
 const useStyles = createStyles((theme) => ({
   title: {
@@ -53,7 +51,7 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
     et: 0,
     ot: 0,
   })
-  const [period, setPeriod] = useState<[Date | null, Date | null]>([dayjs().subtract(1, 'year').toDate(), dayjs().toDate()]);
+  const [period, setPeriod] = useState<[Date | null, Date | null]>([new Date((new Date().getFullYear()-1), 3, 1), new Date()]);
   const [validPeriod, setValidPeriod] = useState<[Date, Date]>([new Date((new Date().getFullYear()-1), 3, 1), new Date()]);
   const [memberStatus, setMemberStatus] = useState<PersonAggEduUnitsTableProps["memberStatus"]>("returnAll")
   const [searchOpen, setSearchOpen] = useState(true)

@@ -10,8 +10,6 @@ import type { ScrapeResponse } from "../../../etl/types";
 import { env } from "../../../env/server.mjs";
 
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { countOfPersonsOfEducationUnits, personsOfEducationUnits } from "../../../etl/CreditEarning";
-import { MicpaPerson } from "@prisma/client";
 
 export const linkedinRouter = createTRPCRouter({
   scrapeLinkedinPersons: publicProcedure

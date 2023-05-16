@@ -4,8 +4,7 @@ import Link from "next/link";
 import { saveAs } from "file-saver";
 import { useEffect, useMemo, useState } from "react";
 import { IconAdjustments, IconAlertCircle, IconTableExport } from "@tabler/icons";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { createStyles, Text, Title, Stack, Button, Box, Drawer, useMantineTheme, MultiSelect, ActionIcon, Alert, SegmentedControl, Group, Divider } from "@mantine/core";
+import { createStyles, Text, Title, Stack, Button, Box, Drawer, useMantineTheme, MultiSelect, ActionIcon, Alert, SegmentedControl, Group, Divider, Select } from "@mantine/core";
 import ApplicationContainer from "../components/ApplicationContainer";
 
 import { api } from "../utils/api";
@@ -13,9 +12,8 @@ import PersonsTable from "../components/CPEProgram/PersonsTable";
 import { AppPageProps } from "./_app";
 import { useRouter } from "next/router";
 import Login from "./login";
-import { PersonsProps } from "../etl/CreditEarning";
+import type { Params } from '../server/api/routers/cpeprogram';
 import { MonthPicker } from "@mantine/dates";
-import dayjs from "dayjs";
 import { KeywordFilterDropdown } from "@prisma/client";
 
 const useStyles = createStyles((theme) => ({
@@ -36,10 +34,10 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
   const theme = useMantineTheme();
   const router = useRouter();
   const [exportOn, setExportOn] = useState<boolean>(false)
-  const [period, setPeriod] = useState<[Date | null, Date | null]>([dayjs().subtract(1, 'year').toDate(), dayjs().toDate()]);
-  const [validPeriod, setValidPeriod] = useState<[Date, Date]>();
+  const [period, setPeriod] = useState<[Date | null, Date | null]>([new Date((new Date().getFullYear()-1), 3, 1), new Date()]);
+  const [validPeriod, setValidPeriod] = useState<[Date, Date]>([new Date((new Date().getFullYear()-1), 3, 1), new Date()]);
   const [value, setValue] = useState<string[]>([])
-  const [source, setSource] = useState<PersonsProps["source"]>("both")
+  const [source, setSource] = useState<Params["source"]>("both")
   const [searchOpen, setSearchOpen] = useState(true)
   const [keywords, setKeywords] = useState<KeywordFilterDropdown[]>([])
   const keywordDropdown = api.cpeProgram.fetchDropdownAll.useQuery();
@@ -120,7 +118,7 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
             <Box className="p-4">
               <SegmentedControl
                 value={source}
-                onChange={(v) => setSource(v as PersonsProps["source"])}
+                onChange={(v) => setSource(v as Params["source"])}
                 data={[
                   { label: 'Only 3rd-party', value: '3rd-party' },
                   { label: 'Only MICPA', value: 'micpa' },
@@ -160,6 +158,7 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
                 minDate={new Date(2017, 1, 1)}
               />
             </Group>
+            <Divider my="sm" />
             <Text fz="sm">Export all to Excel (with filter)</Text>
             <ActionIcon onClick={() => setExportOn(true)} color="orange" size="xl" radius="xl" variant="filled">
               <IconTableExport size="2.125rem" />
