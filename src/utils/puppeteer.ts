@@ -4,7 +4,7 @@ import type { Page, Browser } from 'puppeteer';
 //import edgeChromium from 'chrome-aws-lambda';
 //import puppeteer from 'puppeteer-core';
 //import type { Page, Browser } from 'puppeteer-core';
-import { mapLimit } from 'async';
+import Async from 'bluebird'
 import select from '@gizt/selector';
 import fs from 'fs';
 import _ from 'lodash';
@@ -152,12 +152,13 @@ const SEARCH = {
 const API_ENDPOINT = "https://www.linkedin.com/voyager/api/graphql"
 
 export async function initPage(): Promise<[Page, Browser]> {
+  //let browser;
   if (lambda) {
     // TODO REMOVE THIS AFTER TESTING ON RAILWAY WITHOUT LAMBDA
     // Edge executable will return an empty string locally.
     //const executablePath = await edgeChromium.executablePath || LOCAL_CHROME_EXECUTABLE
 
-    //const browser = await puppeteer.launch({
+    //browser = await puppeteer.launch({
       //executablePath,
       //args: edgeChromium.args,
       //headless: edgeChromium.headless,
@@ -168,7 +169,7 @@ export async function initPage(): Promise<[Page, Browser]> {
 
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox'], // https://github.com/puppeteer/puppeteer/issues/3698
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-web-security"], // https://github.com/puppeteer/puppeteer/issues/3698
     ignoreHTTPSErrors: true,
     timeout: 60000,
   })
@@ -339,15 +340,21 @@ export const SearchPeople = async (page: Page, name: string): Promise<string[]> 
 
 export const ScrapePages = async (page: Page, partialDocs: PrepDocType[], parallel = 10): Promise<Information[][]> => {
   const hasProfileUrls = partialDocs.filter(d => d.profile_url);
-  const data = await mapLimit<DocType, DocType[]>(hasProfileUrls, parallel, async (doc: DocType) => {
-    try {
-      const personIdInformation = { personId: doc.personId };
-      return [...(doc.profile_url ? await ScrapePage(page, doc.profile_url) : []), personIdInformation];
-    } catch (e) {
-      // timeout or other errors
-      return [];
+  const data = await Async.map(
+    hasProfileUrls,
+    async (doc: DocType) => {
+      try {
+        const personIdInformation = { personId: doc.personId };
+        return [...(doc.profile_url ? await ScrapePage(page, doc.profile_url) : []), personIdInformation];
+      } catch (e) {
+        // timeout or other errors
+        return [];
+      }
+    },
+    {
+      concurrency: parallel
     }
-  });
+  )
   return data;
 }
 
