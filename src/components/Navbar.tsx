@@ -3,6 +3,7 @@ import {
   IconNotes,
   IconBrandLinkedin,
   IconUsers,
+  IconCreditCard
 } from '@tabler/icons';
 import { LinksGroup } from './NavbarLinksGroup/NavbarLinksGroup';
 
@@ -21,6 +22,11 @@ const mockdata = [
     label: 'CPE Program',
     path: '/cpe_program',
     icon: IconUsers,
+  },
+  {
+    label: 'Credit Earning',
+    path: '/credit_earning',
+    icon: IconCreditCard,
   },
 ];
 

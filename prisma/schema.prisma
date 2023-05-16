@@ -41,7 +41,7 @@ model Account {
     scope             String?
     id_token          String? @db.Text
     session_state     String?
-    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user              User    @relation(fields: [userId], references: [id], onDelete: NoAction)
 
     @@unique([provider, providerAccountId])
 }
@@ -51,7 +51,7 @@ model Session {
     sessionToken String   @unique
     userId       String
     expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user         User     @relation(fields: [userId], references: [id], onDelete: NoAction)
 }
 
 model User {
@@ -92,6 +92,8 @@ model KeywordFilterDropdown {
 
 model PersonLicense {
     id                  String          @id @default(cuid())
+    personId            String          @unique
+    micpaPerson         MicpaPerson     @relation(fields: [personId], references: [id], onDelete: NoAction)
     laraStatus          String
     licenseDate         String
 
@@ -104,6 +106,7 @@ model MicpaPerson {
     name                String
     email               String
     company             String
+    memberType          String          @default("")
     address             String?
     scrapedAt           DateTime? // it is likely we can't find the person on linkedin so we need a flag to tell us if we tried it or not
     mailingLists        MailingListsOnPersons[]
@@ -111,6 +114,8 @@ model MicpaPerson {
     orders              MicpaOrder[] // used for spending, might not correspond 1-1 to credit earned
     subscribeOrderDetails  MicpaOrderDetail[]
     educationUnits      MicpaEducationUnit[] // used for credit earning
+    aggregatedEduUnits  MicpaAggregatedEducationUnit[]
+    personLicense       PersonLicense?
 
     @@index([id])
     @@fulltext([name, email, company])
@@ -121,7 +126,7 @@ model MicpaOrder {
     orderDate           DateTime?
     status              String
     customerId          String? // not all customer id match MicpaPerson record, meaning "customer" will be empty even though this is not empty
-    customer            MicpaPerson?      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    customer            MicpaPerson?      @relation(fields: [customerId], references: [id], onDelete: NoAction)
     orderDetails        MicpaOrderDetail[]
     educationUnits      MicpaEducationUnit[]
 
@@ -146,11 +151,11 @@ model MicpaProduct {
 model MicpaOrderDetail {
     id                  String            @id @default(cuid())
     productId           String? // some product id aren't in product table
-    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: Cascade)
+    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: NoAction)
     orderId             String // person who paid for the order
-    order               MicpaOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    order               MicpaOrder        @relation(fields: [orderId], references: [id], onDelete: NoAction)
     subscriberId        String?  // person who benefit for the membership dues product (not necessarily the one paying it)
-    subscriber          MicpaPerson?      @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+    subscriber          MicpaPerson?      @relation(fields: [subscriberId], references: [id], onDelete: NoAction)
     spending            Float?
 }
 
@@ -159,11 +164,11 @@ model MicpaEducationUnit {
     isThirdParty        Boolean
     externalSource      String? // third party priority, but if empty, fill the associated product name, this column will be used for full text
     productId           String? // could be null if 3rd party
-    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: Cascade)
+    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: NoAction)
     orderId             String? // can get person who ordered it, sometimes this is null
-    order               MicpaOrder?       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    order               MicpaOrder?       @relation(fields: [orderId], references: [id], onDelete: NoAction)
     personId            String?  // person who get the credits, if not filled it could be ignored
-    person              MicpaPerson?      @relation(fields: [personId], references: [id], onDelete: Cascade)
+    person              MicpaPerson?      @relation(fields: [personId], references: [id], onDelete: NoAction)
     educationCategory   String
     creditEarned        Float?            @default(0)
     creditAt            DateTime?
@@ -172,22 +177,35 @@ model MicpaEducationUnit {
     @@fulltext([externalSource])
 }
 
+model MicpaAggregatedEducationUnit {
+    id                  String            @id @default(cuid())
+    personId            String
+    person              MicpaPerson       @relation(fields: [personId], references: [id], onDelete: NoAction)
+    isThirdParty        Boolean
+    educationCategory   String
+    creditEarned        Float?            @default(0)
+    creditStartAt       DateTime?
+    creditEndAt         DateTime?
+
+    @@index([personId, isThirdParty, educationCategory, creditStartAt, creditEndAt])
+}
+
 model MicpaLinkedinPerson {
     id                  String          @id @default(cuid())
     scrapedAt           DateTime?
     information         Json
     micpaPersonId       String
-    micpaPerson         MicpaPerson     @relation(fields: [micpaPersonId], references: [id], onDelete: Cascade)
+    micpaPerson         MicpaPerson     @relation(fields: [micpaPersonId], references: [id], onDelete: NoAction)
     createdAt           DateTime        @default(now()) // use this field to determine the scraped date for a micpaPerson
 }
 
 model MailingListsOnPersons {
     // deleting mailing list will delete related records
     mailingListId       String
-    mailingList         MailingList     @relation(fields: [mailingListId], references: [id], onDelete: Cascade)
+    mailingList         MailingList     @relation(fields: [mailingListId], references: [id], onDelete: NoAction)
     // deleting person will delete related records
     personId            String
-    person              MicpaPerson     @relation(fields: [personId], references: [id], onDelete: Cascade)
+    person              MicpaPerson     @relation(fields: [personId], references: [id], onDelete: NoAction)
     assignedAt          DateTime        @default(now())
     assignedBy          String?         // once we have user login then we can use this field
 

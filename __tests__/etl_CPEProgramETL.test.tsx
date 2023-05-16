@@ -1,8 +1,8 @@
 import {expect, jest, test} from '@jest/globals';
 import { PrismaClient } from "@prisma/client"
-import { countOfPersonsOfEducationUnits, personsOfEducationUnits } from "../src/etl/CreditEarning"
+import { countOfPersonsOfEducationUnits, personsOfEducationUnits } from "../src/etl/CPEProgram"
 
-describe('etl_CreditEarningETL.test.tsx', () => {
+describe('etl_CPEProgramETL.test.tsx', () => {
   const prisma = new PrismaClient({
     log: [
       {

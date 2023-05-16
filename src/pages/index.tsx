@@ -136,6 +136,16 @@ const Home: NextPage = () => {
               >
                 CPE Program
               </Button>
+              <Button
+                onClick={() => void router.push('/credit_earning')}
+                variant="gradient"
+                gradient={{ from: 'yellow', to: 'green' }}
+                size="xl"
+                className={classes.control}
+                mt={40}
+              >
+                Credit Earning
+              </Button>
             </Group>
           </div>
         </div>

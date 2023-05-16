@@ -3,6 +3,7 @@ import { exampleRouter } from "./routers/example";
 import { personRouter } from "./routers/person";
 import { listRouter } from "./routers/list";
 import { cpeProgramRouter } from "./routers/cpeprogram";
+import { creditEarningRouter } from "./routers/creditearning";
 import { linkedinRouter } from "./routers/linkedin";
 
 /**
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   person: personRouter,
   list: listRouter,
   cpeProgram: cpeProgramRouter,
+  creditEarning: creditEarningRouter,
   linkedinRouter: linkedinRouter,
 });
 

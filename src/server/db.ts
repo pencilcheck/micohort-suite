@@ -1,37 +1,16 @@
-import { type Prisma, PrismaClient } from "@prisma/client";
-import { createPrismaRedisCache } from "prisma-redis-middleware";
+import { PrismaClient } from "@prisma/client";
 
 import { env } from "../env/server.mjs";
 
-declare global {
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined;
-}
+import { extendedClient } from "../extends";
 
-const cacheMiddleware: Prisma.Middleware = createPrismaRedisCache({
-  excludeModels: ["MailingList", "MicpaPerson"],
-  excludeMethods: ["count", "groupBy"],
-  cacheTime: 300,
-  onHit: (key) => {
-    console.log("hit", key);
-  },
-  onMiss: (key) => {
-    console.log("miss", key);
-  },
-  onError: (key) => {
-    console.log("error", key);
-  },
-});
+export * from "@prisma/client";
 
-export const prisma =
-  global.prisma ||
-  new PrismaClient({
-    log:
-      env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-  });
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
-prisma.$use(cacheMiddleware);
+export const prisma = globalForPrisma.prisma || extendedClient(new PrismaClient({
+  log:
+    env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+}));
 
-if (env.NODE_ENV !== "production") {
-  global.prisma = prisma;
-}
+if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

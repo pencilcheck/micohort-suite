@@ -5,7 +5,7 @@ import { z } from "zod";
 import * as XLSX from "xlsx";
 
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { countOfPersonsOfEducationUnits, personsOfEducationUnits } from "../../../etl/CreditEarning";
+import { countOfPersonsOfEducationUnits, personsOfEducationUnits } from "../../../etl/CPEProgram";
 import { MicpaPerson } from "@prisma/client";
 import isEmpty from "lodash/isEmpty";
 

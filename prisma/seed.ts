@@ -1,7 +1,13 @@
+import map from 'lodash/map'
 import indexOf from 'lodash/indexOf'
 import flatten from 'lodash/flatten'
 import compact from 'lodash/compact'
-import { MicpaEducationUnit, MicpaProduct, PrismaClient } from '@prisma/client'
+import eachMonthOfInterval from 'date-fns/eachMonthOfInterval'
+import eachQuarterOfInterval from 'date-fns/eachQuarterOfInterval'
+import eachDayOfInterval from 'date-fns/eachDayOfInterval'
+import Async from 'bluebird'
+import clamp from 'date-fns/clamp'
+import { MicpaEducationUnit, MicpaProduct, Prisma, PrismaClient } from '@prisma/client'
 import fs from 'fs'
 import path from 'path'
 import dayjs from 'dayjs'
@@ -14,6 +20,13 @@ dayjs.extend(customParseFormat)
 const prisma = new PrismaClient()
 
 const UTCOffset = -5
+
+async function deleteAll(tableName: string) {
+  let result;
+  do {
+    result = await prisma.$executeRawUnsafe(`DELETE FROM ${tableName} LIMIT 99999;`)
+  } while (result > 0)
+}
 
 function trycatch(func: () => string, fail: string): string {
   try { return func() }
@@ -73,6 +86,9 @@ function readStreamForData(filename: string) {
 }
 
 async function importProducts() {
+  // Reset table (no foreign key so no worries)
+  await deleteAll(`MicpaProduct`)
+
   // Products
   const columns = flatten(
     await streamAsPromise(readStreamForColumn("../data/vwProducts.csv")).catch(() => [])
@@ -111,6 +127,9 @@ async function importProducts() {
 }
 
 async function importPersons() {
+  // Reset table (no foreign key so no worries)
+  await deleteAll(`MicpaPerson`)
+
   // Persons
   const columns = flatten(
     await streamAsPromise(readStreamForColumn("../data/vwPersons.csv")).catch(() => [])
@@ -127,12 +146,15 @@ async function importPersons() {
         && !['111403', '2464'].includes(r[indexOf<string>(columns, 'ID')] ?? '-1');
       })
     }
+
+    // createMany is 100x (not tested) faster than update
     const persons = await prisma.micpaPerson.createMany({
       data: filterChunks(chunks).map(row => ({
         id: row[indexOf<string>(columns, 'ID')] as string,
         name: row[indexOf(columns, 'FirstLast')] || 'No name',
         email: row[indexOf(columns, 'Email1')] || 'No email',
         company: row[indexOf(columns, 'NameWCompany')] || 'No company',
+        memberType: row[indexOf(columns, 'MemberTypeID')] || '',
         address: addressCombined(row, columns) || 'No address',
       })),
       skipDuplicates: true,
@@ -142,6 +164,9 @@ async function importPersons() {
 }
 
 async function importOrders() {
+  // Reset table (no foreign key so no worries)
+  await deleteAll(`MicpaOrder`)
+
   // Orders
   const columns = flatten(
     await streamAsPromise(readStreamForColumn("../data/vwOrders.csv")).catch(() => [])
@@ -167,6 +192,9 @@ async function importOrders() {
 }
 
 async function importOrderDetails() {
+  // Reset table (no foreign key so no worries)
+  await deleteAll(`MicpaOrderDetail`)
+
   // OrderDetails
   const columns = flatten(
     await streamAsPromise(readStreamForColumn("../data/vwOrderDetails.csv")).catch(() => [])
@@ -191,6 +219,15 @@ async function importOrderDetails() {
 }
 
 async function importPersonCPALicenses() {
+  // Reset table (no foreign key so no worries)
+  await deleteAll(`PersonLicense`)
+
+  const allPersonIds = (await prisma.micpaPerson.findMany({
+    select: {
+      id: true,
+    }
+  })).map(o => o.id)
+
   // PersonCPALicenses
   const columns = flatten(
     await streamAsPromise(readStreamForColumn("../data/vwPersonCPALicenses.csv")).catch(() => [])
@@ -201,23 +238,48 @@ async function importPersonCPALicenses() {
   const i = pipe(rows, page(10000));
   for (const chunks of i) {
     const filterChunks = (rows: string[][]) => {
-      return rows.filter(r => {
-        return true
+      return rows.filter(row => {
+        return allPersonIds.includes(row[indexOf<string>(columns, 'ID')] as string);
       })
     }
+
     const personLicenses = await prisma.personLicense.createMany({
       data: filterChunks(chunks).map(row => ({
         id: row[indexOf<string>(columns, 'ID')] as string,
-        laraStatus: row[indexOf<string>(columns, 'MICPA_LARAStatus')]?.trim() || 'Active',
+        personId: row[indexOf<string>(columns, 'ID')] as string,
+        laraStatus: row[indexOf<string>(columns, 'LicenseStatus')]?.trim() || '',
         licenseDate: row[indexOf<string>(columns, 'LicenseDate')]?.trim() || '',
       })),
       skipDuplicates: true,
     })
     console.log(`${personLicenses.count} personLicenses imported`)
+
+    // comment the relation for personlicense before running this
+    //const [_, personLicenses] = await prisma.$transaction([
+      //prisma.personLicense.deleteMany({
+        //where: {
+          //id: {
+            //in: filterChunks(chunks).map(row => (row[indexOf<string>(columns, 'ID')] as string))
+          //}
+        //}
+      //}),
+      //prisma.personLicense.createMany({
+        //data: filterChunks(chunks).map(row => ({
+          //id: row[indexOf<string>(columns, 'ID')] as string,
+          //laraStatus: row[indexOf<string>(columns, 'LicenseStatus')]?.trim() || '',
+          //licenseDate: row[indexOf<string>(columns, 'LicenseDate')]?.trim() || '',
+        //})),
+        //skipDuplicates: true,
+      //}),
+    //])
+    //console.log(`${personLicenses.count} personLicenses imported`)
   }
 }
 
 async function importEducationUnits() {
+  // Reset table (no foreign key so no worries)
+  await deleteAll(`MicpaEducationUnit`)
+
   // EducationUnits
   const columns = flatten(
     await streamAsPromise(readStreamForColumn("../data/vwEducationUnits.csv")).catch(() => [])
@@ -299,11 +361,11 @@ async function fillInEmptyMicpaEducationUnitExternalSource() {
           equals: '', // empty string
         }
       },
-      take: 100,
+      take: 10000, // need to improve the speed, this is too slow
     });
 
     // TODO set timeout to slow down the request so planetscale wouldn't drop my connection
-    await Promise.all(
+    await prisma.$transaction(
       educationUnits.map((unit: { id: string, product: MicpaProduct | null }) => {
         return prisma.micpaEducationUnit.update({
           data: {
@@ -315,6 +377,35 @@ async function fillInEmptyMicpaEducationUnitExternalSource() {
         })
       })
     )
+    //const updateManyResult = await Async.map(
+      //educationUnits,
+      //async (args: typeof createManyArgs[0], i: number) => {
+        //const dateRange = quarterBigram[i]!;
+        //const data = args
+          //.filter((arg: typeof args[0]) => (arg?._sum?.creditEarned ?? 0) > 0)
+          //.map(arg => ({
+            //personId: arg.personId!,
+            //isThirdParty: arg.isThirdParty,
+            //educationCategory: arg.educationCategory!,
+            //creditEarned: arg._sum.creditEarned,
+            //creditStartAt: dateRange[0],
+            //creditEndAt: dateRange[1],
+          //}))
+        ////console.log('data length', data.length)
+
+        //const chunks = pipe(data, page(5000));
+        //for (const chunk of chunks) {
+          //await prisma.micpaAggregatedEducationUnit.createMany({ data: chunk });
+        //}
+        //return data;
+
+        //// planetscale has 20s limit per transaction, need to chunk it, see solution above
+        ////return await prisma.micpaAggregatedEducationUnit.createMany({ data })
+      //},
+      //{
+        //concurrency: 17 // limited by planetscale
+      //}
+    //)
     console.log(`${educationUnits.length} education units externalsource updated`)
   } while (educationUnits.length > 0)
 }
@@ -335,16 +426,140 @@ async function seedKeywordFilterDropdown() {
   });
 }
 
+async function fillInMicpaAggregatedEducationUnit() {
+  // Reset table (no foreign key so no worries)
+  await deleteAll(`MicpaAggregatedEducationUnit`)
+
+  async function createRoutine(dates: Date[]) {
+    const quarterBigram = compact(map(dates, (v, i, array) => {
+      if ((i+1) === array.length) {
+        return null;
+      }
+      return [v, array[i+1]]; 
+    }))
+
+    const createManyArgs = await Async.map(
+      quarterBigram,
+      async (range: typeof quarterBigram[0]) => {
+        return await prisma.micpaEducationUnit.groupBy({
+          by: ['personId', 'isThirdParty', 'educationCategory'],
+          _sum: {
+            creditEarned: true,
+          },
+          where: {
+            creditAt: {
+              gt: range[0], // not inclusive, don't want overlaps
+              lte: range[1], // inclusive
+            }
+          },
+          orderBy: [
+            {
+              personId: 'desc',
+            },
+            {
+              isThirdParty: 'desc',
+            },
+            {
+              educationCategory: 'desc',
+            }
+          ]
+        })
+      },
+      {
+        concurrency: 17 // limited by planetscale
+      }
+    );
+
+    const createManyResult = await Async.map(
+      createManyArgs,
+      async (args: typeof createManyArgs[0], i: number) => {
+        const dateRange = quarterBigram[i]!;
+        const data = args
+          .filter((arg: typeof args[0]) => (arg?._sum?.creditEarned ?? 0) > 0)
+          .map(arg => ({
+            personId: arg.personId!,
+            isThirdParty: arg.isThirdParty,
+            educationCategory: arg.educationCategory!,
+            creditEarned: arg._sum.creditEarned,
+            creditStartAt: dateRange[0],
+            creditEndAt: dateRange[1],
+          }))
+        //console.log('data length', data.length)
+
+        const chunks = pipe(data, page(5000));
+        for (const chunk of chunks) {
+          await prisma.micpaAggregatedEducationUnit.createMany({ data: chunk });
+        }
+        return data;
+
+        // planetscale has 20s limit per transaction, need to chunk it, see solution above
+        //return await prisma.micpaAggregatedEducationUnit.createMany({ data })
+      },
+      {
+        concurrency: 17 // limited by planetscale
+      }
+    )
+    return createManyResult;
+  }
+
+  const dateRange = await prisma.micpaEducationUnit.aggregate({
+    _max: {
+      creditAt: true
+    },
+    _min: {
+      creditAt: true
+    }
+  });
+
+  if (dateRange._min.creditAt && dateRange._max.creditAt) {
+    const start = clamp(dateRange._min.creditAt, {
+      start: new Date(2017, 0, 1),
+      end: new Date(),
+    })
+    const end = clamp(dateRange._max.creditAt, {
+      start: new Date(2017, 0, 1),
+      end: new Date(),
+    })
+
+    // NOTE: Too complicated, make it simple by just having daily count
+    //let result;
+    //const quarterDates = eachQuarterOfInterval({
+      //start,
+      //end,
+    //})
+    //result = await createRoutine(quarterDates);
+    //console.log(`${result.length} quarter dates updated`)
+
+    //const monthDates = eachMonthOfInterval({
+      //start,
+      //end,
+    //})
+    //result = await createRoutine(monthDates);
+    //console.log(`${result.length} month dates updated`)
+
+    const dayDates = eachDayOfInterval({
+      start,
+      end,
+    })
+    const result = await createRoutine(dayDates);
+    console.log(`${result.length} day dates updated`)
+  }
+}
+
+// TODO optimize: https://stackoverflow.com/questions/70948869/mysql-fastest-way-to-import-125000-line-csv
 async function main() {
+  //await seedKeywordFilterDropdown();
   //await importPersons();
+  //await importPersonCPALicenses();
   //await importProducts();
   //await importOrders();
   //await importOrderDetails();
   //await importEducationUnits();
   //await importMailingList();
-  await importPersonCPALicenses();
+
+  // data post processing
   //await fillInEmptyMicpaEducationUnitExternalSource();
-  //await seedKeywordFilterDropdown();
+  await fillInMicpaAggregatedEducationUnit();
 }
 main()
   .then(async () => {

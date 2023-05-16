@@ -9,7 +9,7 @@ import type { PaginationProps } from '../types'
 export interface PersonsProps {
   keywords?: string[];
   source?: '3rd-party' | 'micpa' | 'both';
-  creditDatePeriod?: [Date, Date];
+  creditDatePeriod: [Date, Date];
 }
 
 function createParams(

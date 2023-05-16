@@ -10,7 +10,7 @@ import { MicpaPerson, MicpaLinkedinPerson, MailingList, MailingListsOnPersons, M
 import LinkedinPersonTable from "../LinkedinSearch/LinkedinPersonTable";
 
 import { api } from "../../utils/api";
-import { PersonsProps } from '../../etl/CreditEarning';
+import { PersonsProps } from '../../etl/CPEProgram';
 import EducationUnitsTable from './EducationUnitsTable';
 
 const useStyles = createStyles((theme) => ({
