@@ -41,8 +41,8 @@ export default function PersonsTable({ keywords, source, creditDatePeriod }: Per
   const [selectedRecords, setSelectedRecords] = useState<ColumnType[]>([]);
 
   // on render.com, longer timeout
-  const totalQuery = api.cpeProgram.fetchAllCount.useQuery({ keywords, source, creditDatePeriod });
-  const persons = api.cpeProgram.fetchAllPersonIds.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod });
+  const totalQuery = api.cpeProgram.fetchAllCount.useQuery({ keywords, source, creditDatePeriod }, { trpc: { abortOnUnmount: true } });
+  const persons = api.cpeProgram.fetchAllPersonIds.useQuery({ sortStatus: sortStatus, size: PAGE_SIZE, page, keywords, source, creditDatePeriod }, { trpc: { abortOnUnmount: true } });
 
   useEffect(() => {
     if (persons.isSuccess && !!persons.data) {
