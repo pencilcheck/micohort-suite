@@ -22,13 +22,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             OR: [
               {
                 information: {
-                  path: '$.compacted',
+                  path: ['compacted'],
                   equals: Prisma.JsonNullValueFilter.AnyNull,
                 }
               },
               {
                 information: {
-                  path: '$.compacted',
+                  path: ['compacted'],
                   equals: false,
                 }
               },
