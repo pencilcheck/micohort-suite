@@ -22,10 +22,7 @@ const prisma = new PrismaClient()
 const UTCOffset = -5
 
 async function deleteAll(tableName: string) {
-  let result;
-  do {
-    result = await prisma.$executeRawUnsafe(`DELETE FROM ${tableName} LIMIT 99999;`)
-  } while (result > 0)
+  await prisma.$executeRawUnsafe(`TRUNCATE TABLE "public"."${tableName}" RESTART IDENTITY;`)
 }
 
 function trycatch(func: () => string, fail: string): string {
@@ -361,22 +358,26 @@ async function fillInEmptyMicpaEducationUnitExternalSource() {
           equals: '', // empty string
         }
       },
-      take: 10000, // need to improve the speed, this is too slow
+      take: 100000, // need to improve the speed, this is too slow
     });
 
-    // TODO set timeout to slow down the request so planetscale wouldn't drop my connection
-    await prisma.$transaction(
-      educationUnits.map((unit: { id: string, product: MicpaProduct | null }) => {
-        return prisma.micpaEducationUnit.update({
-          data: {
-            externalSource: unit?.product?.name || 'No name',
-          },
-          where: {
-            id: unit.id,
-          }
+    const i = pipe(educationUnits, page(10000));
+    for (const chunks of i) {
+      // TODO set timeout to slow down the request so planetscale wouldn't drop my connection
+      await prisma.$transaction(
+        chunks.map((unit: { id: string, product: MicpaProduct | null }) => {
+          return prisma.micpaEducationUnit.update({
+            data: {
+              externalSource: unit?.product?.name || 'No name',
+            },
+            where: {
+              id: unit.id,
+            }
+          })
         })
-      })
-    )
+      )
+      console.log(`${chunks.length} chunk of educationUnits updated for relation`)
+    }
     //const updateManyResult = await Async.map(
       //educationUnits,
       //async (args: typeof createManyArgs[0], i: number) => {
@@ -411,19 +412,25 @@ async function fillInEmptyMicpaEducationUnitExternalSource() {
 }
 
 async function seedKeywordFilterDropdown() {
-  await prisma.keywordFilterDropdown.createMany({
-    data: [
-      { value: 'audit', label: 'Audit' },
-      { value: 'accounting', label: 'Accounting' },
-      { value: 'business', label: 'Business' },
-      { value: 'nonprofit', label: 'Nonprofit' },
-      { value: 'government', label: 'Government' },
-      { value: 'cpe', label: 'CPE' },
-      { value: 'risk', label: 'Risk' },
-      { value: 'lease accounting', label: 'Lease Accounting' },
-    ],
-    skipDuplicates: true,
-  });
+  // Reset ONLY if needed (keyword contains user data)
+  //await deleteAll(`KeywordFilterDropdown`)
+
+  const hasKeywords = await prisma.keywordFilterDropdown.count();
+  if (hasKeywords <= 0) {
+    await prisma.keywordFilterDropdown.createMany({
+      data: [
+        { value: 'audit', label: 'Audit' },
+        { value: 'accounting', label: 'Accounting' },
+        { value: 'business', label: 'Business' },
+        { value: 'nonprofit', label: 'Nonprofit' },
+        { value: 'government', label: 'Government' },
+        { value: 'cpe', label: 'CPE' },
+        { value: 'risk', label: 'Risk' },
+        { value: 'lease accounting', label: 'Lease Accounting' },
+      ],
+      skipDuplicates: true,
+    });
+  }
 }
 
 async function fillInMicpaAggregatedEducationUnit() {
@@ -559,7 +566,7 @@ async function main() {
 
   // data post processing
   //await fillInEmptyMicpaEducationUnitExternalSource();
-  await fillInMicpaAggregatedEducationUnit();
+  //await fillInMicpaAggregatedEducationUnit();
 }
 main()
   .then(async () => {

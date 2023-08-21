@@ -55,7 +55,7 @@ function createParams({
   // prisma mysql fulltext: https://www.prisma.io/docs/concepts/components/prisma-client/full-text-search#mysql
   const keywordQuery = !isEmpty(keywords) ? {
     externalSource: {
-      search: keywords?.map(k => `"${k}"`).join(' ')
+      search: keywords?.map(k => `'${k}'`).join(' | ')
     }
   } : {};
 

@@ -12,12 +12,13 @@ generator zod {
 }
 
 datasource db {
-    provider     = "mysql"
+    provider     = "postgresql"
     // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
     // Further reading:
     // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
     // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
     url          = env("DATABASE_URL")
+    directUrl    = env("DIRECT_URL")
     relationMode = "prisma"
 }
 
@@ -41,7 +42,7 @@ model Account {
     scope             String?
     id_token          String? @db.Text
     session_state     String?
-    user              User    @relation(fields: [userId], references: [id], onDelete: NoAction)
+    user              User    @relation(fields: [userId], references: [id], onDelete: Restrict)
 
     @@unique([provider, providerAccountId])
 }
@@ -51,7 +52,7 @@ model Session {
     sessionToken String   @unique
     userId       String
     expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: NoAction)
+    user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
 }
 
 model User {
@@ -93,7 +94,7 @@ model KeywordFilterDropdown {
 model PersonLicense {
     id                  String          @id @default(cuid())
     personId            String          @unique
-    micpaPerson         MicpaPerson     @relation(fields: [personId], references: [id], onDelete: NoAction)
+    micpaPerson         MicpaPerson     @relation(fields: [personId], references: [id], onDelete: Restrict)
     laraStatus          String
     licenseDate         String
 
@@ -118,7 +119,7 @@ model MicpaPerson {
     personLicense       PersonLicense?
 
     @@index([id])
-    @@fulltext([name, email, company])
+    //@@fulltext([name, email, company])
 }
 
 model MicpaOrder {
@@ -126,7 +127,7 @@ model MicpaOrder {
     orderDate           DateTime?
     status              String
     customerId          String? // not all customer id match MicpaPerson record, meaning "customer" will be empty even though this is not empty
-    customer            MicpaPerson?      @relation(fields: [customerId], references: [id], onDelete: NoAction)
+    customer            MicpaPerson?      @relation(fields: [customerId], references: [id], onDelete: Restrict)
     orderDetails        MicpaOrderDetail[]
     educationUnits      MicpaEducationUnit[]
 
@@ -145,17 +146,17 @@ model MicpaProduct {
     orderDetails        MicpaOrderDetail[]
     educationUnits      MicpaEducationUnit[]
 
-    @@fulltext([webName, name, code])
+    //@@fulltext([webName, name, code])
 }
 
 model MicpaOrderDetail {
     id                  String            @id @default(cuid())
     productId           String? // some product id aren't in product table
-    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: NoAction)
+    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: Restrict)
     orderId             String // person who paid for the order
-    order               MicpaOrder        @relation(fields: [orderId], references: [id], onDelete: NoAction)
+    order               MicpaOrder        @relation(fields: [orderId], references: [id], onDelete: Restrict)
     subscriberId        String?  // person who benefit for the membership dues product (not necessarily the one paying it)
-    subscriber          MicpaPerson?      @relation(fields: [subscriberId], references: [id], onDelete: NoAction)
+    subscriber          MicpaPerson?      @relation(fields: [subscriberId], references: [id], onDelete: Restrict)
     spending            Float?
 }
 
@@ -164,23 +165,23 @@ model MicpaEducationUnit {
     isThirdParty        Boolean
     externalSource      String? // third party priority, but if empty, fill the associated product name, this column will be used for full text
     productId           String? // could be null if 3rd party
-    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: NoAction)
+    product             MicpaProduct?     @relation(fields: [productId], references: [id], onDelete: Restrict)
     orderId             String? // can get person who ordered it, sometimes this is null
-    order               MicpaOrder?       @relation(fields: [orderId], references: [id], onDelete: NoAction)
+    order               MicpaOrder?       @relation(fields: [orderId], references: [id], onDelete: Restrict)
     personId            String?  // person who get the credits, if not filled it could be ignored
-    person              MicpaPerson?      @relation(fields: [personId], references: [id], onDelete: NoAction)
+    person              MicpaPerson?      @relation(fields: [personId], references: [id], onDelete: Restrict)
     educationCategory   String
     creditEarned        Float?            @default(0)
     creditAt            DateTime?
 
     @@index([id, productId, orderId, personId, isThirdParty, creditAt])
-    @@fulltext([externalSource])
+    //@@fulltext([externalSource])
 }
 
 model MicpaAggregatedEducationUnit {
     id                  String            @id @default(cuid())
     personId            String
-    person              MicpaPerson       @relation(fields: [personId], references: [id], onDelete: NoAction)
+    person              MicpaPerson       @relation(fields: [personId], references: [id], onDelete: Restrict)
     isThirdParty        Boolean
     educationCategory   String
     creditEarned        Float?            @default(0)
@@ -195,17 +196,17 @@ model MicpaLinkedinPerson {
     scrapedAt           DateTime?
     information         Json
     micpaPersonId       String
-    micpaPerson         MicpaPerson     @relation(fields: [micpaPersonId], references: [id], onDelete: NoAction)
+    micpaPerson         MicpaPerson     @relation(fields: [micpaPersonId], references: [id], onDelete: Restrict)
     createdAt           DateTime        @default(now()) // use this field to determine the scraped date for a micpaPerson
 }
 
 model MailingListsOnPersons {
     // deleting mailing list will delete related records
     mailingListId       String
-    mailingList         MailingList     @relation(fields: [mailingListId], references: [id], onDelete: NoAction)
+    mailingList         MailingList     @relation(fields: [mailingListId], references: [id], onDelete: Restrict)
     // deleting person will delete related records
     personId            String
-    person              MicpaPerson     @relation(fields: [personId], references: [id], onDelete: NoAction)
+    person              MicpaPerson     @relation(fields: [personId], references: [id], onDelete: Restrict)
     assignedAt          DateTime        @default(now())
     assignedBy          String?         // once we have user login then we can use this field
 
