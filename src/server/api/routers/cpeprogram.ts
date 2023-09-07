@@ -3,9 +3,10 @@ import { z } from "zod";
 import * as XLSX from "xlsx";
 
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import type { MicpaPerson } from "@prisma/client";
+import type { MailingList, MicpaPerson } from "@prisma/client";
 import isEmpty from "lodash/isEmpty";
 import isAfter from "date-fns/isAfter";
+import { createMailingListsOnPersons } from "./list";
 
 function exclude<T, Key extends keyof T>(
   users: Array<T>,
@@ -138,13 +139,7 @@ export const cpeProgramRouter = createTRPCRouter({
     }),
 
   fetchAllCount: publicProcedure
-    .input(
-      z.object({
-        keywords: z.array(z.string()).optional(),
-        source: z.enum(["3rd-party", "micpa", "both"]).optional(),
-        creditDatePeriod: z.tuple([z.date(), z.date()]),
-      })
-    )
+    .input(paramSchema)
     .query(async ({ input, ctx }) => {
       // takes 10+s
       const where = createParams(input);
@@ -228,6 +223,36 @@ export const cpeProgramRouter = createTRPCRouter({
         total: result[0],
         rows: result[1],
       };
+    }),
+
+  addCPEProgramResultToList: publicProcedure
+    .input(paramSchema.extend({
+      listId: z.string().optional(),
+      isNew: z.boolean().optional(),
+      newTitle: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const where = createParams(input);
+      const persons = await ctx.prisma.micpaPerson.findMany({
+        where,
+      });
+      const ids = persons.map(p => p.id);
+
+      let list: MailingList | undefined;
+      if (input.isNew) {
+        list = await ctx.prisma.mailingList.create({
+          data: {
+            title: input.newTitle || `A mailing list ${new Date().toDateString()}`
+          },
+        });
+      }
+
+      // new list takes priority
+      if (list?.id || input.listId) {
+        return await createMailingListsOnPersons(ids, (list?.id || input.listId || 'New List'), ctx.prisma);
+      }
+
+      return null;
     }),
 
   getSecretMessage: protectedProcedure.query(() => {

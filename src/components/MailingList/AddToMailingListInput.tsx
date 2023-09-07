@@ -1,4 +1,5 @@
 import { Center, Box, Image, Loader, Button, createStyles, Group, Stack, Text, useMantineTheme, AspectRatio, Card, Select, SelectItem } from '@mantine/core';
+import type { Params } from '../../server/api/routers/cpeprogram';
 import { closeAllModals } from '@mantine/modals';
 import { IconEdit, IconTrash, IconTrashX } from '@tabler/icons';
 import { MicpaPerson, MicpaLinkedinPerson, MailingList } from '@prisma/client';
@@ -10,6 +11,7 @@ import LinkedinPersonTable from "../LinkedinSearch/LinkedinPersonTable";
 
 import { api } from "../../utils/api";
 import { useMemo, useState } from 'react';
+import MailingListTable from './MailingListTable';
 
 const useStyles = createStyles((theme) => ({
   modal: { width: 800, height: "100%" },
@@ -35,41 +37,60 @@ const useStyles = createStyles((theme) => ({
 }));
 
 interface Props {
-  personIds: string[];
+  onAdd: ({ id, isNew, title }: { id: string; isNew: boolean; title: string; }) => void
 }
 
-export default function AddToMailingListInput({ personIds }: Props) {
+export default function AddToMailingListInput({ onAdd }: Props) {
   const utils = api.useContext();
+  const [selectedList, setSelectedList] = useState<string | null>(null)
+  const [newLists, setNewLists] = useState<{ id: string; value: string; label: string; isNew: boolean }[]>([])
 
-  const addUsersToListMutate = api.list.addPersonsToList.useMutation();
   const lists = api.list.fetchAll.useQuery({
     size: 100000,
     page: 1,
+  }, {
+    select: (data) => {
+      return {
+        ...data,
+        rows: data.rows.map((row) => {
+          return {
+            id: row.id,
+            value: row.id,
+            label: row.title,
+            isNew: false
+          }
+        })
+      }
+    }
   });
 
   const handleOnAdd = () => {
-    //addUsersToListMutate.mutate()
-    //utils.list.invalidate().catch(console.log);
+    if (selectedList) {
+      onAdd({
+        id: selectedList,
+        isNew: lists.data?.rows.concat(newLists).find(l => l.id === selectedList)?.isNew || false,
+        title: selectedList
+      })
+    }
   }
 
   return (
     <Stack>
       <Text fz="sm">Add to a mailing list (or a new list)</Text>
       {lists.isSuccess && <Select
+        value={selectedList}
+        onChange={setSelectedList}
         label="Mailing list"
-        data={[]}
+        data={lists.data.rows.concat(newLists)}
         placeholder="Select items"
         nothingFound="Nothing found"
         searchable
         creatable
         getCreateLabel={(query) => `+ Create ${query}`}
-        value={null}
-        onChange={undefined}
         onCreate={(query) => {
-          //const item = { value: { isNew: true, title: query }, label: query } as unknown as SelectItem;
-          // create on server mutation
-          //setRecords((current) => [...current, item]);
-          return query;
+          const item = { id: query, value: query, label: query, isNew: true };
+          setNewLists(l => l.concat([item]))
+          return item;
         }}
       />}
       <Button onClick={handleOnAdd}>Add to list</Button>

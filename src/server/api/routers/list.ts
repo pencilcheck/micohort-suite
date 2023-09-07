@@ -1,11 +1,18 @@
 import set from "lodash/set";
-import pick from "lodash/pick";
-import keys from "lodash/keys";
-import uniq from "lodash/uniq";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { MailingList } from "@prisma/client";
+import type { MailingList, PrismaClient } from "@prisma/client";
+
+export const createMailingListsOnPersons = async (ids: string[], listId: string, prisma: PrismaClient) => {
+  return await prisma.mailingListsOnPersons.createMany({
+    data: ids.map((id) => ({
+      mailingListId: listId,
+      personId: id,
+    })),
+    skipDuplicates: true,
+  });
+}
 
 export const listRouter = createTRPCRouter({
   fetchAll: publicProcedure
@@ -71,13 +78,7 @@ export const listRouter = createTRPCRouter({
 
       // new list takes priority
       if (list?.id || input.listId) {
-        const result = await ctx.prisma.mailingListsOnPersons.createMany({
-          data: input.ids.map((id) => ({
-            mailingListId: (list?.id || input.listId) as string,
-            personId: id,
-          })),
-        });
-        return result;
+        return await createMailingListsOnPersons(input.ids, (list?.id || input.listId || 'New List'), ctx.prisma);
       }
 
       return null;
@@ -137,14 +138,7 @@ export const listRouter = createTRPCRouter({
         },
       });
 
-      // assuming input.ids are all actual personIds, no check
-      // use lodash to remove duplicate ids
-      await ctx.prisma.mailingListsOnPersons.createMany({
-        data: uniq(input.ids).map((id) => ({
-          mailingListId: newList.id,
-          personId: id
-        })),
-      });
+      await createMailingListsOnPersons(input.ids, newList.id, ctx.prisma);
 
       return newList;
     }),

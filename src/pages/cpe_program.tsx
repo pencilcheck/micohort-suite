@@ -4,8 +4,9 @@ import Link from "next/link";
 import { saveAs } from "file-saver";
 import { useEffect, useMemo, useState } from "react";
 import { IconAdjustments, IconAlertCircle, IconTableExport } from "@tabler/icons";
-import { createStyles, Text, Title, Stack, Button, Box, Drawer, useMantineTheme, MultiSelect, ActionIcon, Alert, SegmentedControl, Group, Divider, Select } from "@mantine/core";
+import { createStyles, Text, Title, Stack, Button, Box, Drawer, useMantineTheme, MultiSelect, ActionIcon, Alert, SegmentedControl, Group, Divider, Select, LoadingOverlay } from "@mantine/core";
 import ApplicationContainer from "../components/ApplicationContainer";
+import { notifications } from '@mantine/notifications';
 
 import { api } from "../utils/api";
 import PersonsTable from "../components/CPEProgram/PersonsTable";
@@ -15,6 +16,7 @@ import Login from "./login";
 import type { Params } from '../server/api/routers/cpeprogram';
 import { MonthPicker } from "@mantine/dates";
 import { KeywordFilterDropdown } from "@prisma/client";
+import AddToMailingListInput from "../components/MailingList/AddToMailingListInput";
 
 const useStyles = createStyles((theme) => ({
   title: {
@@ -36,6 +38,7 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
   const [exportOn, setExportOn] = useState<boolean>(false)
   const [period, setPeriod] = useState<[Date | null, Date | null]>([new Date((new Date().getFullYear()-1), 3, 1), new Date()]);
   const [validPeriod, setValidPeriod] = useState<[Date, Date]>([new Date((new Date().getFullYear()-1), 3, 1), new Date()]);
+  const [loading, setLoading] = useState<boolean>(false)
   const [value, setValue] = useState<string[]>([])
   const [source, setSource] = useState<Params["source"]>("both")
   const [searchOpen, setSearchOpen] = useState(true)
@@ -46,6 +49,43 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
     { keywords: value, source: source, creditDatePeriod: validPeriod },
     { enabled: exportOn }
   );
+
+  const addCPEProgramResultToList = api.cpeProgram.addCPEProgramResultToList.useMutation();
+
+  const addSearchResultToList = ({ id, isNew, title }: { id: string; isNew: boolean; title: string; }) => {
+    setLoading(true)
+    addCPEProgramResultToList.mutate({
+      keywords: value,
+      source: source,
+      creditDatePeriod: validPeriod,
+      listId: id,
+      isNew: isNew,
+      newTitle: title
+    }, {
+      onSuccess() {
+        setLoading(false)
+        notifications.show({
+          title: 'Added to mailing list',
+          message: '',
+          styles: (theme) => ({
+            root: {
+              backgroundColor: theme.colors.green[6],
+              borderColor: theme.colors.green[6],
+
+              '&::before': { backgroundColor: theme.white },
+            },
+
+            title: { color: theme.white },
+            description: { color: theme.white },
+            closeButton: {
+              color: theme.white,
+              '&:hover': { backgroundColor: theme.colors.green[7] },
+            },
+          }),
+        });
+      }
+    })
+  }
 
   // only execute function if dependency change, and then memorize the return value
   useMemo(() => {
@@ -83,6 +123,7 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <ApplicationContainer>
+        <LoadingOverlay visible={loading} overlayBlur={2} />
         <Stack justify="flex-start" spacing="xs" sx={(theme) => ({ backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0], height: "100%" })}>
           <Box className="flex-1 flex flex-col justify-between">
             <Title className={classes.title}>
@@ -163,6 +204,8 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
             <ActionIcon onClick={() => setExportOn(true)} color="orange" size="xl" radius="xl" variant="filled">
               <IconTableExport size="2.125rem" />
             </ActionIcon>
+            <Divider my="sm" />
+            <AddToMailingListInput onAdd={addSearchResultToList} />
           </Drawer>
         </Stack>
       </ApplicationContainer>
