@@ -93,7 +93,7 @@ async function importProducts() {
   const rows = await streamAsPromise(readStreamForData("../data/vwProducts.csv")).catch(() => []);
 
   // ref: https://github.com/prisma/prisma/issues/9196
-  const i = pipe(rows, page(10000));
+  const i = pipe(rows, page(100000));
   for (const chunks of i) {
     // Only import alive people (look at micohort-postgresql for usable_person query)
     const filterChunks = (rows: string[][]) => {
@@ -134,7 +134,7 @@ async function importPersons() {
   const rows = await streamAsPromise(readStreamForData("../data/vwPersons.csv")).catch(() => []);
 
   // ref: https://github.com/prisma/prisma/issues/9196
-  const i = pipe(rows, page(10000));
+  const i = pipe(rows, page(100000));
   for (const chunks of i) {
     // Only import alive people (look at micohort-postgresql for usable_person query)
     const filterChunks = (rows: string[][]) => {
@@ -160,6 +160,52 @@ async function importPersons() {
   }
 }
 
+async function importExportPersons() {
+  // Reset table (no foreign key so no worries)
+  await deleteAll(`MicpaExportPerson`)
+
+  // Persons
+  const columns = flatten(
+    await streamAsPromise(readStreamForColumn("../data/vwPersons.csv")).catch(() => [])
+  );
+  const rows = await streamAsPromise(readStreamForData("../data/vwPersons.csv")).catch(() => []);
+
+  // ref: https://github.com/prisma/prisma/issues/9196
+  const i = pipe(rows, page(100000));
+  for (const chunks of i) {
+    // Only import alive people (look at micohort-postgresql for usable_person query)
+    const filterChunks = (rows: string[][]) => {
+      return rows.filter(r => {
+        return parseInt(r[indexOf<string>(columns, 'Status')] ?? '-1') != 5
+        && !['111403', '2464'].includes(r[indexOf<string>(columns, 'ID')] ?? '-1');
+      })
+    }
+
+    // createMany is 100x (not tested) faster than update
+    const persons = await prisma.micpaExportPerson.createMany({
+      data: filterChunks(chunks).map(row => ({
+        id: row[indexOf<string>(columns, 'ID')] as string,
+        firstName: row[indexOf(columns, 'FirstName')] || 'No name',
+        lastName: row[indexOf(columns, 'LastName')] || '',
+        email: row[indexOf(columns, 'Email1')] || 'No email',
+        prefEmail: true, // TODO will add once data sync has new data
+        company: row[indexOf(columns, 'NameWCompany')] || 'No company',
+        memberType: row[indexOf(columns, 'MemberTypeID')] || '',
+        addressLine1: row[indexOf(columns, 'MACPA_PreferredAddressLine1')] || 'No address',
+        addressLine2: row[indexOf(columns, 'MACPA_PreferredAddressLine2')] || 'No address',
+        addressLine3: row[indexOf(columns, 'MACPA_PreferredAddressLine3')] || 'No address',
+        addressLine4: row[indexOf(columns, 'MACPA_PreferredAddressLine4')] || 'No address',
+        city: row[indexOf(columns, 'MACPA_PreferredCity')] || 'No city',
+        state: row[indexOf(columns, 'MACPA_PreferredState')] || 'No state',
+        zip: row[indexOf(columns, 'MACPA_PreferredZip')] || 'No zip',
+        badgeName: '', // TODO also will add once data sync
+      })),
+      skipDuplicates: true,
+    })
+    console.log(`${persons.count} export persons imported`)
+  }
+}
+
 async function importOrders() {
   // Reset table (no foreign key so no worries)
   await deleteAll(`MicpaOrder`)
@@ -171,7 +217,7 @@ async function importOrders() {
   const rows = await streamAsPromise(readStreamForData("../data/vwOrders.csv")).catch(() => []);
 
   // ref: https://github.com/prisma/prisma/issues/9196
-  const i = pipe(rows, page(10000));
+  const i = pipe(rows, page(100000));
   for (const chunks of i) {
     const orders = await prisma.micpaOrder.createMany({
       data: chunks.map(row => ({
@@ -199,7 +245,7 @@ async function importOrderDetails() {
   const rows = await streamAsPromise(readStreamForData("../data/vwOrderDetails.csv")).catch(() => []);
 
   // ref: https://github.com/prisma/prisma/issues/9196
-  const i = pipe(rows, page(10000));
+  const i = pipe(rows, page(100000));
   for (const chunks of i) {
     const details = await prisma.micpaOrderDetail.createMany({
       data: chunks.map(row => ({
@@ -232,7 +278,7 @@ async function importPersonCPALicenses() {
   const rows = await streamAsPromise(readStreamForData("../data/vwPersonCPALicenses.csv")).catch(() => []);
 
   // ref: https://github.com/prisma/prisma/issues/9196
-  const i = pipe(rows, page(10000));
+  const i = pipe(rows, page(100000));
   for (const chunks of i) {
     const filterChunks = (rows: string[][]) => {
       return rows.filter(row => {
@@ -284,7 +330,7 @@ async function importEducationUnits() {
   const rows = await streamAsPromise(readStreamForData("../data/vwEducationUnits.csv")).catch(() => []);
 
   // ref: https://github.com/prisma/prisma/issues/9196
-  const i = pipe(rows, page(10000));
+  const i = pipe(rows, page(100000));
   for (const chunks of i) {
     const filterChunks = (rows: string[][]) => {
       return rows.filter(r => {
@@ -358,12 +404,12 @@ async function fillInEmptyMicpaEducationUnitExternalSource() {
           equals: '', // empty string
         }
       },
-      take: 100000, // need to improve the speed, this is too slow
+      take: 100000,
     });
 
-    const i = pipe(educationUnits, page(10000));
+    // look like even neon can't do this much, reducing page size
+    const i = pipe(educationUnits, page(10));
     for (const chunks of i) {
-      // TODO set timeout to slow down the request so planetscale wouldn't drop my connection
       await prisma.$transaction(
         chunks.map((unit: { id: string, product: MicpaProduct | null }) => {
           return prisma.micpaEducationUnit.update({
@@ -473,7 +519,7 @@ async function fillInMicpaAggregatedEducationUnit() {
         })
       },
       {
-        concurrency: 17 // limited by planetscale
+        concurrency: 1
       }
     );
 
@@ -493,7 +539,7 @@ async function fillInMicpaAggregatedEducationUnit() {
           }))
         //console.log('data length', data.length)
 
-        const chunks = pipe(data, page(5000));
+        const chunks = pipe(data, page(1000));
         for (const chunk of chunks) {
           await prisma.micpaAggregatedEducationUnit.createMany({ data: chunk });
         }
@@ -503,7 +549,7 @@ async function fillInMicpaAggregatedEducationUnit() {
         //return await prisma.micpaAggregatedEducationUnit.createMany({ data })
       },
       {
-        concurrency: 17 // limited by planetscale
+        concurrency: 1
       }
     )
     return createManyResult;
@@ -557,6 +603,7 @@ async function fillInMicpaAggregatedEducationUnit() {
 async function main() {
   //await seedKeywordFilterDropdown();
   //await importPersons();
+  await importExportPersons();
   //await importPersonCPALicenses();
   //await importProducts();
   //await importOrders();

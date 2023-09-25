@@ -118,8 +118,19 @@ export const cpeProgramRouter = createTRPCRouter({
     .input(paramSchema)
     .query(async ({ input, ctx }) => {
       const where = createParams(input);
-      const persons = await ctx.prisma.micpaPerson.findMany({
+      const ids = await ctx.prisma.micpaPerson.findMany({
+        select: {
+          id: true,
+        },
         where,
+      });
+
+      const persons = await ctx.prisma.micpaExportPerson.findMany({
+        where: {
+          id: {
+            in: ids.map(i => i.id)
+          }
+        },
       });
 
       const safeRows = exclude<MicpaPerson, 'scrapedAt'>(persons, ['scrapedAt'])

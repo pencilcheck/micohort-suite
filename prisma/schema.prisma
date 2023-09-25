@@ -110,6 +110,7 @@ model MicpaPerson {
     memberType          String          @default("")
     address             String?
     scrapedAt           DateTime? // it is likely we can't find the person on linkedin so we need a flag to tell us if we tried it or not
+
     mailingLists        MailingListsOnPersons[]
     linkedinPersons     MicpaLinkedinPerson[]
     orders              MicpaOrder[] // used for spending, might not correspond 1-1 to credit earned
@@ -120,6 +121,26 @@ model MicpaPerson {
 
     @@index([id])
     //@@fulltext([name, email, company])
+}
+
+model MicpaExportPerson {
+    id                  String          @id @default(cuid())
+    firstName           String
+    lastName            String
+    email               String
+    prefEmail           Boolean         @default(false)
+    company             String
+    memberType          String          @default("")
+    addressLine1        String?
+    addressLine2        String?
+    addressLine3        String?
+    addressLine4        String?
+    city                String?
+    state               String?
+    zip                 String?
+    badgeName           String?
+
+    @@index([id])
 }
 
 model MicpaOrder {
