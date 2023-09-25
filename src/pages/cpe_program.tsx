@@ -102,7 +102,9 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
       );
       saveAs(blob, `report-${value.length}keywords-${source || 'both'}-${validPeriod?.[0]?.toISOString() || 'no start date'}-${validPeriod?.[1]?.toISOString() || 'no end date'}.xlsx`);
       setExportOn(false);
-    } else {
+    }
+
+    if (!excelBlobQuery.isSuccess && exportOn) {
       notifications.show({
         title: 'Error',
         message: 'Timeout running query to export. Please reduce your query size and try again.',
