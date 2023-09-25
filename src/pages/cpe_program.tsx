@@ -102,6 +102,26 @@ const Page = ({ hasReadPermission }: AppPageProps) => {
       );
       saveAs(blob, `report-${value.length}keywords-${source || 'both'}-${validPeriod?.[0]?.toISOString() || 'no start date'}-${validPeriod?.[1]?.toISOString() || 'no end date'}.xlsx`);
       setExportOn(false);
+    } else {
+      notifications.show({
+        title: 'Error',
+        message: 'Timeout running query to export. Please reduce your query size and try again.',
+        styles: (theme) => ({
+          root: {
+            backgroundColor: theme.colors.red[6],
+            borderColor: theme.colors.red[6],
+
+            '&::before': { backgroundColor: theme.white },
+          },
+
+          title: { color: theme.white },
+          description: { color: theme.white },
+          closeButton: {
+            color: theme.white,
+            '&:hover': { backgroundColor: theme.colors.red[7] },
+          },
+        }),
+      });
     }
   }, [excelBlobQuery, exportOn, source, validPeriod, value])
 
