@@ -2,21 +2,21 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { createPrismaRedisCache } from "prisma-redis-middleware";
 
 export const extendedClient = (client: PrismaClient) => {
-  const cacheMiddleware: Prisma.Middleware = createPrismaRedisCache({
-    excludeModels: ["MailingList", "MicpaPerson"],
-    excludeMethods: ["count", "groupBy"],
-    cacheTime: 300,
-    onHit: (key) => {
-      console.log("hit", key);
-    },
-    onMiss: (key) => {
-      console.log("miss", key);
-    },
-    onError: (key) => {
-      console.log("error", key);
-    },
-  });
-  client.$use(cacheMiddleware);
+  //const cacheMiddleware: Prisma.Middleware = createPrismaRedisCache({
+    //excludeModels: ["MailingList", "MicpaPerson"],
+    //excludeMethods: ["count", "groupBy"],
+    //cacheTime: 300,
+    //onHit: (key) => {
+      //console.log("hit", key);
+    //},
+    //onMiss: (key) => {
+      //console.log("miss", key);
+    //},
+    //onError: (key) => {
+      //console.log("error", key);
+    //},
+  //});
+  //client.$use(cacheMiddleware);
 
   //, "PersonCPALicenses"."MICPA_LARAStatus" = ''Active'' as active
 
