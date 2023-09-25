@@ -133,7 +133,7 @@ export const cpeProgramRouter = createTRPCRouter({
         },
       });
 
-      const safeRows = exclude<MicpaPerson, 'scrapedAt'>(persons, ['scrapedAt'])
+      const safeRows = persons
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const ws = XLSX.utils.json_to_sheet(safeRows, {});
